@@ -1,0 +1,525 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'JT Alvito';
+  src: url('/mc/jt-alvito-semi-bold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --background: 220 13% 94%;
+    /* Light Gray for page background */
+    --foreground: 222 47% 11%;
+    /* Dark Blue/Black for text */
+
+    --card: 0 0% 100%;
+    /* White for card backgrounds */
+    --card-foreground: 222 47% 11%;
+    /* Dark Blue/Black for card text */
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 53%;
+    /* Blue */
+    --primary-hsl: 217 91% 53%;
+    /* Blue HSL for drop shadow */
+    --primary-foreground: 0 0% 100%;
+    /* White for text on primary elements */
+
+    --secondary: 210 40% 96.1%;
+    /* Lighter Gray for secondary elements */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 90%;
+    /* Medium Gray for muted elements */
+    --muted-foreground: 215 20% 65%;
+    /* Lighter Gray for muted text */
+
+    --accent: 217 91% 53%;
+    /* Blue for accents */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72.2% 50.6%;
+    /* Red for destructive actions */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 214 32% 91%;
+    /* Light Gray Border */
+    --input: 214 32% 91%;
+    --ring: 217 91% 53%;
+    /* Blue for focus rings */
+
+    --radius: 0.75rem;
+
+    /* Chart colors */
+    --chart-1: 217 91% 53%;
+    /* Blue */
+    --chart-2: 160 76% 45%;
+    /* Green */
+    --chart-3: 217 91% 60%;
+    /* Blue */
+    --chart-4: 40 93% 58%;
+    /* Yellow */
+    --chart-5: 300 70% 60%;
+    /* Magenta/Purple */
+
+    /* Sidebar specific variables */
+    --sidebar-background: 0 0% 100%;
+    /* Dark Blue for sidebar */
+    --sidebar-foreground: 222 30% 22%;
+    /* White text */
+    --sidebar-primary: 217 91% 60%;
+    /* Lighter Blue for active/hover states in sidebar */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91% 50%;
+    /* Soft blue for hover in sidebar */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 15% 90%;
+    /* Slightly lighter border for sidebar */
+    --sidebar-ring: 217 91% 53%;
+    /* Blue */
+
+    /* Leaderboard specific colors - Blue Theme (Eye-catching) */
+    --leaderboard-bg-main-start: 217 60% 30%;
+    /* Richer Deep Blue */
+    --leaderboard-bg-main-end: 217 70% 25%;
+    /* Darker, slightly more red blue */
+    --leaderboard-podium-bg: 217 55% 40%;
+    /* Distinct rich blue for podium items */
+    --leaderboard-text-light: 217 85% 95%;
+    /* Very light warm off-white/cream */
+
+    --leaderboard-list-area-bg: 217 40% 20%;
+    /* Darker dark blue for the list container */
+    --leaderboard-list-item-bg: 217 60% 98%;
+    /* Warm very light beige/off-white for list items */
+    --leaderboard-list-item-bg-dark: 217 35% 22%;
+    /* Darker item bg for dark mode */
+
+    --leaderboard-list-text: 217 50% 25%;
+    /* Dark warm brown for list text on light items */
+    --leaderboard-list-text-dark: 217 70% 85%;
+    /* Lighter text for list items in dark mode */
+
+    --leaderboard-gold: 45 93% 58%;
+    /* Vibrant, clear gold-yellow */
+    --leaderboard-silver: 217 15% 75%;
+    /* Cool, light silver */
+    --leaderboard-bronze: 217 50% 45%;
+    /* Warm, desaturated blue/brown */
+    --leaderboard-rank-badge-bg: hsl(var(--leaderboard-gold));
+    --leaderboard-rank-badge-text: 217 60% 15%;
+    /* Dark brown text for gold badges */
+
+    --leaderboard-arrow-up: 217 65% 50%;
+    /* Vibrant Green */
+    --leaderboard-arrow-down: 217 75% 58%;
+    /* Vibrant Red */
+    --leaderboard-subtle-border: 217 30% 22%;
+    /* Darker blue for subtle borders on dark bg */
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    /* Dark Blue/Black */
+    --foreground: 210 40% 98%;
+    /* Off-white */
+
+    --card: 222 47% 15%;
+    /* Darker card background */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    /* Brighter Blue for dark mode */
+    --primary-hsl: 217 91% 60%;
+    /* Brighter Blue HSL for drop shadow in dark mode */
+    --primary-foreground: 222 47% 11%;
+    /* Dark for text on bright blue */
+
+    --secondary: 217 33% 17%;
+    /* Dark Gray for secondary */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 91% 60%;
+    /* Brighter Blue */
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+    /* Brighter Blue */
+
+    /* Chart colors for dark mode */
+    --chart-1: 217 91% 60%;
+    /* Blue */
+    --chart-2: 160 70% 50%;
+    /* Green */
+    --chart-3: 217 91% 65%;
+    /* Blue */
+    --chart-4: 40 85% 62%;
+    /* Yellow */
+    --chart-5: 280 65% 65%;
+    /* Purple */
+
+    /* Sidebar specific variables for dark mode */
+    --sidebar-background: 220 45% 15%;
+    /* Very Dark Blue for sidebar */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 217 91% 65%;
+    /* Brightest Blue for active in dark sidebar */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91% 55%;
+    /* Bright blue for hover */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 45% 20%;
+    --sidebar-ring: 217 91% 65%;
+    /* Brightest Blue */
+
+    /* Leaderboard specific colors for dark mode (Blue Theme - Eye-catching) */
+    --leaderboard-bg-main-start: 217 60% 30%;
+    --leaderboard-bg-main-end: 217 70% 25%;
+    --leaderboard-podium-bg: 217 55% 40%;
+    --leaderboard-text-light: 217 85% 95%;
+
+    --leaderboard-list-area-bg: 217 35% 18%;
+    /* Darker version for list area bg in dark mode */
+    --leaderboard-list-item-bg: hsl(var(--leaderboard-list-item-bg-dark));
+    /* Use the specific dark item bg */
+    --leaderboard-list-text: hsl(var(--leaderboard-list-text-dark));
+
+    --leaderboard-gold: 45 93% 58%;
+    --leaderboard-silver: 217 15% 75%;
+    --leaderboard-bronze: 217 50% 45%;
+    --leaderboard-rank-badge-bg: hsl(var(--leaderboard-gold));
+    --leaderboard-rank-badge-text: 217 60% 15%;
+
+    --leaderboard-arrow-up: 217 65% 50%;
+    --leaderboard-arrow-down: 217 75% 58%;
+    --leaderboard-subtle-border: 217 30% 22%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Global scrollbar hiding */
+  * {
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  @supports (scrollbar-width: none) {
+    * {
+      scrollbar-width: none; /* Firefox, Chrome 121+, Safari 18.2+ */
+    }
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Safari, Chrome < 121, iOS Safari, Samsung Internet */
+  }
+
+  /* Hide number input arrows */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
+@layer components {
+  .table-action-button {
+    @apply h-8 w-8 p-0;
+    /* Standard size for table action icons */
+  }
+
+  .page-header {
+    @apply mb-6 pb-4 border-b border-border/70;
+  }
+
+  .page-title {
+    @apply text-3xl font-bold tracking-tight text-foreground;
+  }
+
+  .page-description {
+    @apply text-base text-muted-foreground mt-1;
+  }
+}
+
+@layer utilities {
+  .progress-indicator-gradient {
+    background-image: linear-gradient(to right, hsl(var(--destructive)), hsl(39 100% 50%), hsl(60 100% 50%), hsl(90 76% 50%), hsl(var(--chart-2)));
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+
+    html,
+    body {
+      width: 210mm;
+      height: auto;
+      background: #fff !important;
+    }
+
+    .invoice-page {
+      page-break-after: always;
+      width: 100%;
+      height: auto;
+      box-sizing: border-box;
+      overflow: visible !important;
+      background: #fff !important;
+    }
+
+    .invoice-page:last-child {
+      page-break-after: avoid;
+    }
+  }
+
+
+  .custom-scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  .custom-scrollbar-hidden {
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  @supports (scrollbar-width: none) {
+    .custom-scrollbar-hidden {
+      scrollbar-width: none; /* Firefox, Chrome 121+, Safari 18.2+ */
+    }
+  }
+
+  .aurora-bg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .aurora-bg::before,
+  .aurora-bg::after {
+    content: '';
+    position: absolute;
+    width: 120vmax;
+    height: 120vmax;
+    border-radius: 50%;
+    animation: rotate 12s cubic-bezier(.5, .5, .5, .5) alternate infinite;
+    mix-blend-mode: screen;
+    filter: blur(80px);
+  }
+
+  .aurora-bg::before {
+    top: -50%;
+    left: -50%;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 60%);
+    animation-direction: alternate-reverse;
+  }
+
+  .aurora-bg::after {
+    bottom: -50%;
+    right: -50%;
+    background: radial-gradient(circle, hsl(var(--chart-3) / 0.5), transparent 60%);
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+
+    100% {
+      transform: rotate(360deg) scale(1.2);
+    }
+  }
+
+  /* From Uiverse.io by akshat-patel28 */
+  .uiverse-toast-card {
+    width: 100%;
+    max-width: 380px;
+    height: 85px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    background-color: hsl(var(--card));
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 8px 24px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 15px;
+    transition: all 0.3s ease;
+  }
+
+  .uiverse-toast-wave {
+    position: absolute;
+    transform: rotate(90deg);
+    left: -35px;
+    top: 32px;
+    width: 90px;
+    opacity: 0.2;
+  }
+
+  .uiverse-toast-card[data-variant="destructive"] .uiverse-toast-wave {
+    fill: #fc0c0c;
+  }
+
+  .uiverse-toast-card[data-variant="default"] .uiverse-toast-wave {
+    fill: #10b981;
+  }
+
+  .uiverse-toast-icon-container {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    margin-left: 5px;
+    flex-shrink: 0;
+  }
+
+  .uiverse-toast-card[data-variant="destructive"] .uiverse-toast-icon-container {
+    background-color: #fc0c0c48;
+  }
+
+  .uiverse-toast-card[data-variant="default"] .uiverse-toast-icon-container {
+    background-color: #10b98120;
+  }
+
+  .uiverse-toast-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .uiverse-toast-card[data-variant="destructive"] .uiverse-toast-icon {
+    color: #d10d0d;
+  }
+
+  .uiverse-toast-card[data-variant="default"] .uiverse-toast-icon {
+    color: #059669;
+  }
+
+  .uiverse-toast-text-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .uiverse-toast-message-text {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .uiverse-toast-card[data-variant="destructive"] .uiverse-toast-message-text {
+    color: #d10d0d;
+  }
+
+  .uiverse-toast-card[data-variant="default"] .uiverse-toast-message-text {
+    color: #059669;
+  }
+
+  .uiverse-toast-sub-text {
+    font-size: 13px;
+    color: hsl(var(--muted-foreground));
+    margin: 0;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .uiverse-toast-cross-icon {
+    width: 18px;
+    height: 18px;
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.2s;
+  }
+
+  .uiverse-toast-cross-icon:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .font-card-no {
+    font-family: 'JT Alvito', 'Share Tech Mono', monospace;
+    letter-spacing: 0.12em;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-shadow: 0.5px 0.5px 0px rgba(0, 0, 0, 0.1);
+  }
+
+  [cmdk-list] {
+    max-height: 320px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Hide scrollbar across all browsers while retaining scrolling */
+  .no-scrollbar::-webkit-scrollbar,
+  .custom-scrollbar::-webkit-scrollbar,
+  .scrollbar-none::-webkit-scrollbar {
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
+  }
+
+  .no-scrollbar,
+  .custom-scrollbar,
+  .scrollbar-none {
+    -ms-overflow-style: none !important; /* IE and Edge */
+  }
+
+  @supports (scrollbar-width: none) {
+    .no-scrollbar,
+    .custom-scrollbar,
+    .scrollbar-none {
+      scrollbar-width: none !important; /* Firefox, Chrome 121+, Safari 18.2+ */
+    }
+  }
+}

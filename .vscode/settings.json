@@ -1,0 +1,32 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "cSpell.words": [
+    "Financials",
+    "uuidv",
+    "Packzy",
+    "vfei",
+    "rxqxjs",
+    "xntkkvc",
+    "odeax",
+    "fhdohq",
+    "chclientpay",
+    "jsbarcode",
+    "likebtn",
+    "unliked",
+    "Sontek",
+    "Kajla",
+    "Jatrabari",
+    "bkash",
+    "nagad",
+    "Kash",
+    "Nagad",
+    "Dania",
+    "DBBL",
+    "colorhut",
+    "ampm"
+  ],
+  "cSpell.ignoreRegExpList": [
+    "/[\\u0980-\\u09FF]+/g"
+  ]
+}
