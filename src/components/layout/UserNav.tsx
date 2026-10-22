@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
-import { LogOut, User as UserIcon, Settings, Edit3, Calculator, Hash, BadgeCheck, KeyRound, ShieldCheck } from "lucide-react";
+import { LogOut, Settings, Edit3, Calculator, Hash, BadgeCheck, KeyRound, ShieldCheck } from "lucide-react";
 import { EditProfileDialog } from "@/components/users/edit-profile-dialog";
 import { PinSettingsDialog } from "@/components/users/PinSettingsDialog";
 import { TwoFactorSettingsDialog } from "@/components/users/TwoFactorSettingsDialog";
@@ -148,10 +148,6 @@ export function UserNav() {
               <span>Gyroscope</span>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem disabled>
-            <UserIcon className="mr-2 h-4 w-4" />
-            <span>Profile (Soon)</span>
-          </DropdownMenuItem>
           <DropdownMenuItem disabled>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings (Soon)</span>

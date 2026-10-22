@@ -10,8 +10,9 @@ export const PROJECT_STAGE_CONFIG: Array<{
 }> = [
   { status: 'CR Clearance', orderStatusId: ORDER_SUBMITTED_ID, timestampField: 'crClearanceAt', color: '#0284C7' },
   { status: 'Operation Manager', orderStatusId: 'co-clearance', timestampField: 'coClearanceAt', color: '#0D9488' },
+  { status: 'Requirements Collection', orderStatusId: 'requirements-collection', timestampField: 'requirementsCollectionAt', color: '#06B6D4' },
   { status: 'On Script', orderStatusId: READY_FOR_DESIGN_STATUS_ID, timestampField: 'onDesignAt', color: '#9333EA' },
-  { status: 'On Hold', orderStatusId: ON_HOLD_STATUS_ID, timestampField: 'onHoldAt', color: '#EAB308' },
+  { status: 'Approval Period', orderStatusId: ON_HOLD_STATUS_ID, timestampField: 'onHoldAt', color: '#EAB308' },
   { status: 'Script Done', orderStatusId: 'script-done', timestampField: 'scriptDoneAt', color: '#7C3AED' },
   { status: 'Artist Booked', orderStatusId: 'artist-booked', timestampField: 'artistBookedAt', color: '#DB2777' },
   { status: 'Cinematographer', orderStatusId: 'cinematographer', timestampField: 'cinematographerAt', color: '#2563EB' },
@@ -35,6 +36,7 @@ export const timestampFieldForStage = (status: ProjectStatusType): keyof Project
 export function stageForOrderStatus(orderStatusId: string): ProjectStatusType {
   const hit = PROJECT_STAGE_CONFIG.find((s) => s.orderStatusId === orderStatusId);
   if (hit) return hit.status;
+  if (orderStatusId === ON_HOLD_STATUS_ID || orderStatusId === 'on-hold') return 'Approval Period';
   if (orderStatusId.toLowerCase().includes('design')) return 'On Script';
   if (orderStatusId === 'shipped') return 'Project Delivered';
   if (orderStatusId === 'logistics') return 'Project Complete';
@@ -44,7 +46,9 @@ export function stageForOrderStatus(orderStatusId: string): ProjectStatusType {
 export const STAGE_BADGE_CLASS: Record<ProjectStatusType, string> = {
   'CR Clearance': 'bg-sky-600 text-sky-50 hover:bg-sky-600/80',
   'Operation Manager': 'bg-teal-600 text-teal-50 hover:bg-teal-600/80',
+  'Requirements Collection': 'bg-cyan-600 text-cyan-50 hover:bg-cyan-600/80',
   'On Script': 'bg-purple-600 text-purple-50 hover:bg-purple-600/80',
+  'Approval Period': 'bg-yellow-500 text-yellow-950 hover:bg-yellow-500/80',
   'On Hold': 'bg-yellow-500 text-yellow-950 hover:bg-yellow-500/80',
   'Script Done': 'bg-violet-600 text-violet-50 hover:bg-violet-600/80',
   'Artist Booked': 'bg-pink-600 text-pink-50 hover:bg-pink-600/80',

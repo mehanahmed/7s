@@ -22,6 +22,7 @@ import { updateUserInfoAction, previewEmployeeIdAction } from '@/app/(app)/users
 import { Edit3 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { isDrRole } from '@/lib/roles';
+import { getArtistCategories } from '@/lib/user-service';
 
 interface EditUserInfoDialogProps {
   user: User;
@@ -45,7 +46,10 @@ export function EditUserInfoDialog({ user, onUserInfoUpdated, isOpen, onOpenChan
   const { toast } = useToast();
 
   const isVendor = user.role === 'VENDOR';
+  const isArtist = user.role === 'ARTIST';
   const isCrmOrDrOrLr = user.role === 'CR' || isDrRole(user.role) || user.role === 'LR';
+  const [artistCategories, setArtistCategories] = useState<string[]>([]);
+  const [isAddingNewArtistCategory, setIsAddingNewArtistCategory] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -58,6 +62,10 @@ export function EditUserInfoDialog({ user, onUserInfoUpdated, isOpen, onOpenChan
       setIsLeader(user.isLeader || false);
       setJoinDate(user.joinDate || '');
       setEmployeeId(user.employeeId || '');
+      setIsAddingNewArtistCategory(false);
+      if (user.role === 'ARTIST') {
+        getArtistCategories().then(cats => setArtistCategories(cats)).catch(() => {});
+      }
     }
   }, [isOpen, user]);
 
@@ -120,7 +128,7 @@ export function EditUserInfoDialog({ user, onUserInfoUpdated, isOpen, onOpenChan
       isLeader: isCrmOrDrOrLr ? isLeader : undefined,
     };
     
-    if (isVendor) {
+    if (isVendor || isArtist) {
         updates.address = address.trim() || null;
         updates.category = category === 'none' ? null : category.trim() || null;
     }
@@ -226,6 +234,61 @@ export function EditUserInfoDialog({ user, onUserInfoUpdated, isOpen, onOpenChan
               </div>
             )}
             
+            {isArtist && (
+              <>
+                <div className="space-y-1">
+                  <Label htmlFor="artistAddress-edit">Address</Label>
+                  <Input
+                    id="artistAddress-edit"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="Artist's address"
+                    maxLength={1000}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="artistCategory-edit">Category</Label>
+                  <Select
+                    value={isAddingNewArtistCategory ? 'new' : category ? `category:${category}` : 'none'}
+                    onValueChange={(val) => {
+                      if (val === 'new') {
+                        setIsAddingNewArtistCategory(true);
+                        setCategory('');
+                      } else {
+                        setIsAddingNewArtistCategory(false);
+                        setCategory(val.startsWith('category:') ? val.slice(9) : '');
+                      }
+                    }}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger id="artistCategory-edit">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No category</SelectItem>
+                      {artistCategories.map((name) => (
+                        <SelectItem key={name} value={`category:${name}`}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new">Add new category...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {isAddingNewArtistCategory && (
+                    <Input
+                      placeholder="New category name"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      maxLength={100}
+                      disabled={isLoading}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              </>
+            )}
+
             {isVendor && (
               <>
                 <div className="space-y-1">

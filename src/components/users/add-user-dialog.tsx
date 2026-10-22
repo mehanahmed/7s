@@ -317,7 +317,7 @@ export function AddUserDialog({ onUserAdded, currentUser, isOpen, onOpenChange, 
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSubmitting}
-            className="group relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-50 to-sky-100 shadow-[0_10px_28px_-8px_rgba(37,99,235,0.55)] ring-4 ring-white transition hover:scale-105"
+            className="group relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-50 to-sky-100 ring-4 ring-white transition hover:scale-105"
             aria-label={selectedFile ? "Change profile photo" : "Add profile photo"}
           >
             {previewUrl ? (
@@ -333,7 +333,7 @@ export function AddUserDialog({ onUserAdded, currentUser, isOpen, onOpenChange, 
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSubmitting}
-            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-white transition hover:scale-110"
+            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-white transition hover:scale-110"
             aria-label={selectedFile ? "Change photo" : "Add photo"}
           >
             <Camera className="h-4 w-4" />
@@ -343,7 +343,7 @@ export function AddUserDialog({ onUserAdded, currentUser, isOpen, onOpenChange, 
               type="button"
               onClick={handleRemovePreview}
               disabled={isSubmitting}
-              className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow ring-2 ring-white transition hover:scale-110"
+              className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground ring-2 ring-white transition hover:scale-110"
               aria-label="Remove photo"
             >
               <XCircle className="h-4 w-4" />

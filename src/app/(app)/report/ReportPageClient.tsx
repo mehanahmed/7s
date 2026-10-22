@@ -32,9 +32,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateTaskEntryAction, deleteTaskEntryAction, updateReportFiltersAction, getReportDataAction } from './actions';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DateRangePicker, type PredefinedRange } from '@/components/dashboard/date-range-picker';
+import { DateRangePicker3, type PredefinedRange } from '@/components/dashboard/date-range-picker3';
 import type { DateRange } from "react-day-picker";
-import { isWithinInterval, parseISO, subDays, startOfDay, endOfDay, getYear, format } from 'date-fns';
+import { isWithinInterval, parseISO, subDays, startOfDay, endOfDay, getYear, format, startOfMonth, endOfMonth } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
@@ -58,7 +58,8 @@ import { OperationManagerDetails } from '@/components/report/OperationManagerDet
 import { ScriptWriterReport } from '@/components/report/ScriptWriterReport';
 import { CinematographerReport } from '@/components/report/CinematographerReport';
 import { EditorReport } from '@/components/report/EditorReport';
-import { getSalesExecutiveUsers } from '@/lib/sales-executive-summary';
+import { getSalesExecutiveUsers, calculateSalesExecutiveSummary } from '@/lib/sales-executive-summary';
+import { DueAmountReport } from '@/components/report/DueAmountReport';
 
 
 const formatCurrency = (value: number) => {
@@ -290,10 +291,10 @@ export function ReportPageClient() {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 29),
-    to: new Date(),
-  });
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(() => ({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  }));
   const [activeTab, setActiveTab] = useState("daily_sales");
 
   useEffect(() => {
@@ -396,6 +397,10 @@ export function ReportPageClient() {
     setIsDeletingTask(false);
     setTaskToDelete(null);
   };
+
+  const crSummary = useMemo(() => {
+    return calculateSalesExecutiveSummary(orders, allUsers, globalSettings, selectedUserId, selectedDateRange);
+  }, [orders, allUsers, globalSettings, selectedUserId, selectedDateRange]);
 
   const filteredOrdersByDate = useMemo(() => {
     let dateFiltered = orders;
@@ -574,8 +579,12 @@ export function ReportPageClient() {
     <>
       <div className="space-y-6 p-1 sm:p-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="flex justify-end items-center mb-4">
-              <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h1 className="page-title text-2xl sm:text-3xl">Reports & Analytics</h1>
+              <p className="page-description text-sm mt-0.5">Overview of company performance, sales, and operations</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
                 {isAdmin && (
                   <>
                     <Select
@@ -611,9 +620,10 @@ export function ReportPageClient() {
                     />
                   </>
                 )}
-                <DateRangePicker 
+                <DateRangePicker3 
                     initialRange={selectedDateRange} 
                     onDateRangeChange={handleDateRangeChange}
+                    className="h-10"
                 />
               </div>
           </div>
@@ -640,6 +650,7 @@ export function ReportPageClient() {
           <>
             <SalesExecutiveCards orders={orders} users={allUsers} settings={globalSettings} userId={selectedUserId} dateRange={selectedDateRange} isLoading={isLoading} />
             <SalesExecutiveCharts orders={orders} users={allUsers} settings={globalSettings} userId={selectedUserId} dateRange={selectedDateRange} isLoading={isLoading} />
+            <DueAmountReport invoices={crSummary.outstandingInvoices} isLoading={isLoading} />
             <ExecutivePerformance orders={orders} users={allUsers} settings={globalSettings} userId={selectedUserId} dateRange={selectedDateRange} isLoading={isLoading} />
           </>
         )}

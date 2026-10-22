@@ -6,7 +6,7 @@ import {
 } from 'date-fns';
 import {
   AlertTriangle, CalendarCheck, CalendarClock, CalendarDays, Check, Clock, Edit, ExternalLink, MapPin, Phone, PlusCircle,
-  LayoutList, Search, Trash2, Users, Video, XCircle,
+  LayoutList, Search, Trash2, Users, Video, XCircle, Globe, FileText,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -129,7 +129,7 @@ export default function MeetingsPage() {
         return true;
       })
       .filter((m) => typeFilter === 'all' || m.type === typeFilter)
-      .filter((m) => !q || [m.title, m.contactName, m.companyName, m.phone, m.location, m.ownerName].some((v) => (v ?? '').toLowerCase().includes(q)))
+      .filter((m) => !q || [m.title, m.contactName, m.companyName, m.phone, m.location, m.ownerName, m.clientWebsite, m.serviceRequirement].some((v) => (v ?? '').toLowerCase().includes(q)))
       .sort((a, b) => (filter === 'upcoming' || filter === 'today' ? a.meetingAt.localeCompare(b.meetingAt) : b.meetingAt.localeCompare(a.meetingAt)));
   }, [meetings, filter, typeFilter, search, now]);
 
@@ -137,7 +137,7 @@ export default function MeetingsPage() {
     const q = search.trim().toLowerCase();
     return meetings
       .filter((m) => typeFilter === 'all' || m.type === typeFilter)
-      .filter((m) => !q || [m.title, m.contactName, m.companyName, m.phone, m.location, m.ownerName].some((v) => (v ?? '').toLowerCase().includes(q)));
+      .filter((m) => !q || [m.title, m.contactName, m.companyName, m.phone, m.location, m.ownerName, m.clientWebsite, m.serviceRequirement].some((v) => (v ?? '').toLowerCase().includes(q)));
   }, [meetings, typeFilter, search]);
 
   const groups = useMemo(() => {
@@ -302,6 +302,27 @@ export default function MeetingsPage() {
                               ? <a href={m.location} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><ExternalLink className="h-3.5 w-3.5" aria-hidden />Join link</a>
                               : <span className="inline-flex items-start gap-1.5 text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{m.location}</span>}
                           </p>
+                        )}
+                        {m.clientWebsite && (
+                          <p className="flex items-center gap-1.5 text-sm [overflow-wrap:anywhere]">
+                            <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                            <a
+                              href={m.clientWebsite.startsWith('http') ? m.clientWebsite : `https://${m.clientWebsite}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                            >
+                              {m.clientWebsite}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </p>
+                        )}
+                        {m.serviceRequirement && (
+                          <div className="flex items-start gap-1.5 text-sm text-foreground/90">
+                            <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                            <span className="font-medium text-muted-foreground">Requirement:</span>
+                            <span>{m.serviceRequirement}</span>
+                          </div>
                         )}
                         {m.notes && <p className="line-clamp-2 text-sm text-muted-foreground">{m.notes}</p>}
                         <p className="text-xs text-muted-foreground">Owner: {m.ownerName}</p>

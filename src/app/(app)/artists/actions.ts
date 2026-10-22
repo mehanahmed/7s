@@ -5,7 +5,10 @@
 import { revalidatePath } from "next/cache";
 import type { BillReport } from "@/types";
 import { addBillReport as addBillReportService } from '@/lib/bill-report-service';
-import { guard } from '@/lib/guard';
+import { guard, requireRole } from '@/lib/guard';
+import { DEFAULT_ARTIST_CATEGORIES } from '@/types';
+import { getArtistCategories } from '@/lib/user-service';
+import { getGlobalSettings, setArtistCategories } from '@/lib/settings-service';
 
 
 export async function addBillReportAction(
@@ -79,3 +82,94 @@ export async function updateBillReportAction(
   }
 }
 
+
+export async function getArtistCategoriesAction(): Promise<{
+  defaults: string[];
+  custom: string[];
+  all: string[];
+}> {
+  await guard();
+  const settings = await getGlobalSettings();
+  const custom = settings.artistCategories || [];
+  const all = await getArtistCategories();
+  return {
+    defaults: DEFAULT_ARTIST_CATEGORIES,
+    custom,
+    all,
+  };
+}
+
+export async function addArtistCategoryAction(categoryName: string): Promise<{
+  success: boolean;
+  error?: string;
+  categories?: { defaults: string[]; custom: string[]; all: string[] };
+}> {
+  await requireRole(['SYSTEM_ADMIN', 'ADMIN']);
+  try {
+    const trimmed = categoryName.trim();
+    if (!trimmed) {
+      return { success: false, error: 'Category name cannot be empty.' };
+    }
+    if (trimmed.length > 50) {
+      return { success: false, error: 'Category name is too long (max 50 characters).' };
+    }
+
+    const settings = await getGlobalSettings();
+    const existingCustom = settings.artistCategories || [];
+    const all = await getArtistCategories();
+
+    if (all.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      return { success: false, error: `Category "${trimmed}" already exists.` };
+    }
+
+    const updated = [...existingCustom, trimmed];
+    await setArtistCategories(updated);
+    revalidatePath("/(app)/artists");
+
+    const newAll = await getArtistCategories();
+    return {
+      success: true,
+      categories: {
+        defaults: DEFAULT_ARTIST_CATEGORIES,
+        custom: updated,
+        all: newAll,
+      },
+    };
+  } catch (error) {
+    console.error("Error in addArtistCategoryAction:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to add category." };
+  }
+}
+
+export async function deleteArtistCategoryAction(categoryName: string): Promise<{
+  success: boolean;
+  error?: string;
+  categories?: { defaults: string[]; custom: string[]; all: string[] };
+}> {
+  await requireRole(['SYSTEM_ADMIN', 'ADMIN']);
+  try {
+    const trimmed = categoryName.trim();
+    if (DEFAULT_ARTIST_CATEGORIES.some(d => d.toLowerCase() === trimmed.toLowerCase())) {
+      return { success: false, error: 'Cannot delete default system category.' };
+    }
+
+    const settings = await getGlobalSettings();
+    const existingCustom = settings.artistCategories || [];
+    const updated = existingCustom.filter(c => c.toLowerCase() !== trimmed.toLowerCase());
+    await setArtistCategories(updated);
+    revalidatePath("/(app)/artists");
+
+    const newAll = await getArtistCategories();
+    return {
+      success: true,
+      categories: {
+        defaults: DEFAULT_ARTIST_CATEGORIES,
+        custom: updated,
+        all: newAll,
+      },
+    };
+  } catch (error) {
+    console.error("Error in deleteArtistCategoryAction:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete category." };
+  }
+}

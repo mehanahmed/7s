@@ -494,19 +494,27 @@ export const addOrder = async (orderData: {
     }
 
     const currentDate = parseISO(finalCreatedAt);
-    const datePrefix = `ORD-${format(currentDate, 'yyyyMMdd')}`;
+    const yearPrefix = format(currentDate, 'yy');
+    const orderPrefix = `SS-WO-${yearPrefix}`;
 
-    const sameDayResults = await query<any[]>(`SELECT id FROM ${ORDERS_TABLE} WHERE id LIKE ?`, [`${datePrefix}%`]);
+    const existingOrders = await query<any[]>(`SELECT id FROM ${ORDERS_TABLE} WHERE id LIKE ?`, [`${orderPrefix}%`]);
     let newSequence = 1;
-    if (sameDayResults.length > 0) {
-      const lastSequence = Math.max(...sameDayResults.map(row => {
-        const numPart = parseInt(row.id.split('-').pop() || '0', 10);
+    if (existingOrders.length > 0) {
+      const lastSequence = Math.max(...existingOrders.map(row => {
+        const suffix = (row.id || '').substring(orderPrefix.length);
+        const numPart = parseInt(suffix, 10);
         return isNaN(numPart) ? 0 : numPart;
       }));
-      newSequence = lastSequence + 1;
+      newSequence = (lastSequence > 0 ? lastSequence : 0) + 1;
     }
 
-    const orderId = `${datePrefix}-${String(newSequence).padStart(3, '0')}`;
+    let orderId = `${orderPrefix}${String(newSequence).padStart(4, '0')}`;
+    let collisionCheck = await query<any[]>(`SELECT id FROM ${ORDERS_TABLE} WHERE id = ?`, [orderId]);
+    while (collisionCheck.length > 0) {
+      newSequence++;
+      orderId = `${orderPrefix}${String(newSequence).padStart(4, '0')}`;
+      collisionCheck = await query<any[]>(`SELECT id FROM ${ORDERS_TABLE} WHERE id = ?`, [orderId]);
+    }
 
     // Determine or generate client ID
     let clientId = orderData.clientId?.trim();

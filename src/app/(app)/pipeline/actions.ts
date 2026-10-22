@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getIO } from "@/lib/socket-io";
 import { LEAD_CATEGORY_LABELS, LEAD_TEMPERATURES } from "@/lib/pipeline-constants";
 import { guard } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 
 const isValidTemperature = (t: unknown) => t == null || (LEAD_TEMPERATURES as readonly unknown[]).includes(t);
 
@@ -186,10 +187,11 @@ export async function addLeadActivityAction(
 export async function deleteLeadActivityAction(
   leadId: string,
   activityId: string,
-  actingUser: User
+  _actingUser?: User
 ): Promise<{ success: boolean; lead?: Lead; error?: string }> {
   await guard();
-  if (actingUser.role !== 'SYSTEM_ADMIN') {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser || sessionUser.role !== 'SYSTEM_ADMIN') {
     return { success: false, error: "Permission denied." };
   }
   try {

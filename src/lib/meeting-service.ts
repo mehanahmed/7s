@@ -123,6 +123,8 @@ export async function updateMeeting(id: string, input: Partial<MeetingInput>): P
   if (input.contactName !== undefined) set('contact_name', input.contactName?.trim() || null);
   if (input.companyName !== undefined) set('company_name', input.companyName?.trim() || null);
   if (input.phone !== undefined) set('phone', input.phone?.trim() || null);
+  if (input.clientWebsite !== undefined) set('client_website', input.clientWebsite?.trim() || null);
+  if (input.serviceRequirement !== undefined) set('service_requirement', input.serviceRequirement?.trim() || null);
   if (input.meetingAt !== undefined) set('meeting_at', toSqlDateTime(input.meetingAt));
   if (input.durationMin !== undefined) set('duration_min', Math.max(5, Number(input.durationMin) || 30));
   if (input.type !== undefined) { if (!TYPES.includes(input.type)) throw new Error('Invalid meeting type.'); set('type', input.type); }

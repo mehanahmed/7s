@@ -29,11 +29,25 @@ const nextConfig: NextConfig = {
       handlebars: 'handlebars/dist/handlebars.js',
     },
   },
+  allowedDevOrigins: [
+    '192.168.0.109',
+    '192.168.0.109:9002',
+    'localhost',
+    'localhost:9002',
+    '127.0.0.1',
+    '127.0.0.1:9002',
+  ],
   experimental: {
     turbopackFileSystemCacheForDev: true,
     serverActions: {
       bodySizeLimit: '4mb',
       allowedOrigins: [
+        '192.168.0.109:9002',
+        '192.168.0.109',
+        'localhost:9002',
+        'localhost',
+        '127.0.0.1:9002',
+        '127.0.0.1',
         'app.colorhutbd.xyz',
         'https://app.colorhutbd.xyz',
         'www.app.colorhutbd.xyz',

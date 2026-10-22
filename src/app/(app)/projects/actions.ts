@@ -4,7 +4,7 @@
 import { vatAmountFor } from '@/lib/vat';
 import { revalidatePath } from "next/cache";
 import type { Project, ProjectStatusType, User, OrderLogEntry, AdvancePaymentRecord, DeliveryPaymentInput, TrackingLink } from "@/types";
-import { updateProjectStatus as updateProjectStatusInDb, getProjectById } from '@/lib/project-service';
+import { updateProjectStatus as updateProjectStatusInDb, getProjectById, updateProject } from '@/lib/project-service';
 import { getUserById } from '@/lib/user-service';
 import { getOrderById, updateOrder, autoSettleOrderIfDelivered, unsettleOrderPayment } from '@/lib/order-service';
 
@@ -14,6 +14,7 @@ import { sendTelegramMessage } from "@/lib/notification-utils";
 import { getIO } from "@/lib/socket-io";
 import { getAppUrl } from "@/lib/server-utils";
 import { guard } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 import { orderStatusIdForStage, STAGE_ASSIGN_ROLE, PROOF_REQUIRED_STAGES, hasProofInNote, LINK_REQUIRED_STAGES, hasLinkInNote } from '@/lib/project-stages';
 
 const orderDueAmount = (order: TrackingLink): number => {
@@ -34,16 +35,21 @@ export async function getProjectDueAction(projectId: string): Promise<{ due: num
 export async function updateProjectStatusAction(
   project: Project,
   newStatus: ProjectStatusType,
-  actingUser: User,
+  actingUser?: User,
   notes?: string, // Added optional notes parameter
   deliveryPayment?: DeliveryPaymentInput,
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
+  const sessionUser = await getSessionUser();
+  const effectiveUser = sessionUser || actingUser;
+  if (!effectiveUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
+  }
   try {
     const settings = await getGlobalSettings();
-    if (actingUser.role !== 'SYSTEM_ADMIN') {
+    if (effectiveUser.role !== 'SYSTEM_ADMIN') {
       const permissions = settings.projectStageAccess;
-      if (permissions && permissions[newStatus] && !permissions[newStatus].includes(actingUser.role)) {
+      if (permissions && permissions[newStatus] && !permissions[newStatus].includes(effectiveUser.role)) {
         return { success: false, error: `You do not have permission to move projects to the '${newStatus}' stage.` };
       }
     }
@@ -80,8 +86,8 @@ export async function updateProjectStatusAction(
           date: new Date().toISOString(),
           paymentMethod: method,
           notes: `Delivery payment. Ref: ${reference}`,
-          recordedByUserId: actingUser.id,
-          recordedByUserName: actingUser.name,
+          recordedByUserId: effectiveUser.id,
+          recordedByUserName: effectiveUser.name,
           documentUrl: proofUrl,
           status: 'Approved',
         };
@@ -99,8 +105,8 @@ export async function updateProjectStatusAction(
       await updateOrder(project.id, {
         advancePayments: [...(current?.advancePayments || []), paymentRecord],
         updatedAt: new Date().toISOString(),
-        updatedByUserId: actingUser.id,
-        updatedByUserName: actingUser.name,
+        updatedByUserId: effectiveUser.id,
+        updatedByUserName: effectiveUser.name,
       });
     }
 
@@ -110,30 +116,30 @@ export async function updateProjectStatusAction(
       let statusUpdateNote: string | null = null;
 
       if (originalStatus === 'Project Delivered' && newStatus !== 'Project Delivered') {
-        const unsettleReason = `Payment unsettled: Project moved from 'Project Delivered' to '${newStatus}' by ${actingUser.name}.`;
-        await unsettleOrderPayment(project.id, unsettleReason, actingUser);
+        const unsettleReason = `Payment unsettled: Project moved from 'Project Delivered' to '${newStatus}' by ${effectiveUser.name}.`;
+        await unsettleOrderPayment(project.id, unsettleReason, effectiveUser);
       }
 
       targetOrderStatusId = orderStatusIdForStage(newStatus) ?? null;
-      statusUpdateNote = newStatus === 'On Hold'
-        ? `Order put on hold from project board by ${actingUser.name}. Reason: ${notes || 'Not specified.'}`
-        : `Order moved to '${newStatus}' via project board by ${actingUser.name}.${notes ? ' ' + notes : ''}`;
+      statusUpdateNote = newStatus === 'Approval Period' || newStatus === 'On Hold'
+        ? `Order put into approval period from project board by ${effectiveUser.name}. Reason: ${notes || 'Not specified.'}`
+        : `Order moved to '${newStatus}' via project board by ${effectiveUser.name}.${notes ? ' ' + notes : ''}`;
 
       if (targetOrderStatusId && statusUpdateNote && order.currentStatus !== targetOrderStatusId) {
         const newLogEntry: OrderLogEntry = {
           id: uuidv4(),
           timestamp: new Date().toISOString(),
           status: targetOrderStatusId,
-          changedByUserId: actingUser.id,
-          changedByUserName: actingUser.name,
+          changedByUserId: effectiveUser.id,
+          changedByUserName: effectiveUser.name,
           notes: statusUpdateNote,
         };
         const orderUpdateSuccess = await updateOrder(order.id, {
           currentStatus: targetOrderStatusId,
           statusHistory: [...order.statusHistory, newLogEntry],
           updatedAt: new Date().toISOString(),
-          updatedByUserId: actingUser.id,
-          updatedByUserName: actingUser.name,
+          updatedByUserId: effectiveUser.id,
+          updatedByUserName: effectiveUser.name,
         });
 
         if (!orderUpdateSuccess) {
@@ -141,7 +147,7 @@ export async function updateProjectStatusAction(
         } else {
           console.log(`Order ${order.id} status updated to ${targetOrderStatusId} due to project ${project.id} being ${newStatus}.`);
           if (newStatus === 'Project Delivered') {
-            await autoSettleOrderIfDelivered(project.id, `System auto-settled: Project moved to '${newStatus}'.`, actingUser);
+            await autoSettleOrderIfDelivered(project.id, `System auto-settled: Project moved to '${newStatus}'.`, effectiveUser);
           }
         }
       }
@@ -175,10 +181,15 @@ export async function assignStageRoleAction(
   projectId: string,
   newStatus: ProjectStatusType,
   assigneeId: string,
-  actingUser: User,
+  actingUser?: User,
   notes?: string,
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
+  const sessionUser = await getSessionUser();
+  const effectiveUser = sessionUser || actingUser;
+  if (!effectiveUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
+  }
   try {
     const cfg = STAGE_ASSIGN_ROLE[newStatus];
     if (!cfg) return { success: false, error: `Stage '${newStatus}' does not take an assignee.` };
@@ -193,7 +204,7 @@ export async function assignStageRoleAction(
     if (!project) return { success: false, error: `Project ${projectId} not found.` };
 
     // 1. move the stage (permission check + order status + project timestamps)
-    const moved = await updateProjectStatusAction(project, newStatus, actingUser, notes);
+    const moved = await updateProjectStatusAction(project, newStatus, effectiveUser, notes);
     if (!moved.success) return moved;
 
     // 2. remember the assignee on the order
@@ -206,7 +217,7 @@ export async function assignStageRoleAction(
     const last = history[history.length - 1];
     const justMoved = !!last
       && last.status === (fresh?.currentStatus ?? order.currentStatus)
-      && last.changedByUserId === actingUser.id
+      && last.changedByUserId === effectiveUser.id
       && /^Order moved to /.test(last.notes ?? '')
       && Date.now() - new Date(last.timestamp).getTime() < 60_000;
     if (justMoved) {
@@ -216,17 +227,17 @@ export async function assignStageRoleAction(
         id: uuidv4(),
         timestamp: new Date().toISOString(),
         status: fresh?.currentStatus ?? order.currentStatus,
-        changedByUserId: actingUser.id,
-        changedByUserName: actingUser.name,
-        notes: `${assignedNote} (by ${actingUser.name})`,
+        changedByUserId: effectiveUser.id,
+        changedByUserName: effectiveUser.name,
+        notes: `${assignedNote} (by ${effectiveUser.name})`,
       });
     }
     const ok = await updateOrder(projectId, {
       stageAssignees,
       statusHistory: history,
       updatedAt: new Date().toISOString(),
-      updatedByUserId: actingUser.id,
-      updatedByUserName: actingUser.name,
+      updatedByUserId: effectiveUser.id,
+      updatedByUserName: effectiveUser.name,
     });
     if (!ok) return { success: false, error: "Stage moved, but saving the assignee failed." };
 
@@ -242,5 +253,23 @@ export async function assignStageRoleAction(
   } catch (error) {
     console.error("Error in assignStageRoleAction:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unexpected error occurred." };
+  }
+}
+
+export async function saveProjectRequirementsAction(
+  projectId: string,
+  requirements: { pageUrl?: string; websiteUrl?: string; reference?: string }
+): Promise<{ success: boolean; error?: string }> {
+  await guard();
+  try {
+    const success = await updateProject(projectId, {
+      pageUrl: requirements.pageUrl?.trim() || null,
+      websiteUrl: requirements.websiteUrl?.trim() || null,
+      reference: requirements.reference?.trim() || null,
+    });
+    return { success };
+  } catch (e) {
+    console.error("Error in saveProjectRequirementsAction:", e);
+    return { success: false, error: e instanceof Error ? e.message : 'Failed to save requirements' };
   }
 }

@@ -192,7 +192,7 @@ export function ViewLeadDialog({ isOpen, onOpenChange, onLeadUpdated, onEditRequ
                       <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-primary/80"/><span>{lead.phone}</span></div>
                       <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary/80"/><span>{lead.address}</span></div>
                       <div className="flex items-center gap-2"><Bot className="h-4 w-4 text-primary/80"/><span>Source: {lead.source}</span></div>
-                      <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary/80"/><span>Added: {formatDateSafe(lead.date)}</span></div>
+                      <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary/80"/><span>Onboarding Date: {formatDateSafe(lead.date)}</span></div>
                       {lead.schedule && <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium"><CalendarDays className="h-4 w-4"/><span>Schedule: {formatDateSafe(lead.schedule)}</span></div>}
                       <div className="flex items-center gap-2"><UserIcon className="h-4 w-4 text-primary/80"/><span>CR: {lead.crmName}</span></div>
                   </div>

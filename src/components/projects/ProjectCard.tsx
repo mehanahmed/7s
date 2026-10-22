@@ -4,7 +4,7 @@ import { PROJECT_STAGE_CONFIG, timestampFieldForStage, STAGE_ASSIGN_ROLE } from 
 import type { Project, CustomStatus, User } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, User as UserIconLucide, ReceiptText, UserCheck, Star, BadgeCheck } from 'lucide-react';
+import { CalendarDays, User as UserIconLucide, ReceiptText, UserCheck, Star, BadgeCheck, Globe, FileText, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import NextLink from 'next/link';
 import { Progress } from '@/components/ui/progress';
@@ -173,7 +173,7 @@ const calculateProgressInfo = (
     const projectEnd = parseISO(endDate);
     const totalDeliveryDays = Math.max(1, differenceInSeconds(projectEnd, projectStart) / 86400);
 
-    if (status === 'On Hold') {
+    if (status === 'On Hold' || status === 'Approval Period') {
       effectiveTargetDate = addDays(effectiveStartDate, 15);
       slaStageName = " (Max 15 Days)";
     } else {
@@ -190,6 +190,7 @@ const calculateProgressInfo = (
         effectiveTargetDate = addHours(effectiveStartDate, 48);
         slaStageName = ` (${formatSlaHours(48)})`;
         break;
+      case 'Approval Period':
       case 'On Hold':
         effectiveTargetDate = addDays(effectiveStartDate, 15);
         slaStageName = " (Max 15 Days)";
@@ -211,7 +212,7 @@ const calculateProgressInfo = (
     progressColorClass = 'bg-destructive';
     currentPercentage = 100;
   } else if (
-    isBefore(now, effectiveStartDate) && status !== 'On Hold'
+    isBefore(now, effectiveStartDate) && status !== 'Approval Period' && status !== 'On Hold'
   ) {
     const timeUntilStart = formatDistanceToNowStrict(effectiveStartDate, { addSuffix: false });
     currentDisplayText = `Starts in ${timeUntilStart}`;
@@ -219,7 +220,7 @@ const calculateProgressInfo = (
   } else {
     const secondsRemaining = differenceInSeconds(effectiveTargetDate, now);
     if (secondsRemaining <= 0) {
-      currentDisplayText = (status === 'On Hold') ? "Hold period ended" : (endDate ? "Delivery date reached" : "Stage due");
+      currentDisplayText = (status === 'Approval Period' || status === 'On Hold') ? "Approval period ended" : (endDate ? "Delivery date reached" : "Stage due");
       currentPercentage = 100;
       progressColorClass = isAfter(now, effectiveTargetDate) ? 'bg-destructive' : 'bg-yellow-500';
     } else {
@@ -394,6 +395,47 @@ const ProjectCardComponent = function ProjectCard({ project, isOverlay = false, 
               {project.status === 'Project Delivered' ? 'Delivered' : 'Target'}: {progressInfo.stageTargetDate}
             </div>
           </NextLink>
+          {(project.pageUrl || project.websiteUrl || project.reference) && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs" onClick={(e) => e.stopPropagation()}>
+              {project.pageUrl && (
+                <a
+                  href={project.pageUrl.startsWith('http') ? project.pageUrl : `https://${project.pageUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800 hover:underline text-[11px]"
+                  title={`Client Page: ${project.pageUrl}`}
+                >
+                  <Share2 className="h-3 w-3" /> Page
+                </a>
+              )}
+              {project.websiteUrl && (
+                <a
+                  href={project.websiteUrl.startsWith('http') ? project.websiteUrl : `https://${project.websiteUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 hover:underline text-[11px]"
+                  title={`Client Website: ${project.websiteUrl}`}
+                >
+                  <Globe className="h-3 w-3" /> Web
+                </a>
+              )}
+              {project.reference && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground border cursor-help text-[11px]">
+                        <FileText className="h-3 w-3" /> Ref
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs">
+                      <p className="font-semibold mb-0.5">Requirements & References:</p>
+                      <p className="whitespace-pre-wrap">{project.reference}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          )}
 
           {progressInfo.showProgressBar && (
             <div className="pt-1">
@@ -557,6 +599,9 @@ export const ProjectCard = React.memo(ProjectCardComponent, (prevProps, nextProp
     prevProps.project.isDocsApproved === nextProps.project.isDocsApproved &&
     prevProps.project.isDesignApproved === nextProps.project.isDesignApproved &&
     prevProps.project.designerRepresentativeId === nextProps.project.designerRepresentativeId &&
+    prevProps.project.pageUrl === nextProps.project.pageUrl &&
+    prevProps.project.websiteUrl === nextProps.project.websiteUrl &&
+    prevProps.project.reference === nextProps.project.reference &&
     JSON.stringify(prevProps.project.stageAssignees ?? null) === JSON.stringify(nextProps.project.stageAssignees ?? null) &&
     prevProps.currentUser?.id === nextProps.currentUser?.id &&
     prevProps.isOverlay === nextProps.isOverlay &&

@@ -2,6 +2,8 @@
 
 import { query } from './mysql';
 import type { User, UserRole } from '@/types';
+import { DEFAULT_ARTIST_CATEGORIES } from '@/types';
+import { getGlobalSettings } from '@/lib/settings-service';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -56,11 +58,15 @@ const ensureCategoryColumn = async () => {
 export const getArtistCategories = async (): Promise<string[]> => {
   await guard();
   await ensureCategoryColumn();
+  const settings = await getGlobalSettings();
+  const customFromSettings = settings?.artistCategories || [];
+
   const rows = await query<{ category: string }[]>(
     `SELECT DISTINCT TRIM(category) AS category FROM ${USERS_TABLE} WHERE role = ? AND category IS NOT NULL AND TRIM(category) <> '' ORDER BY category ASC`,
     ['ARTIST'],
   );
-  return rows.map(row => row.category);
+  const dbCategories = rows.map(row => row.category);
+  return Array.from(new Set([...DEFAULT_ARTIST_CATEGORIES, ...customFromSettings, ...dbCategories]));
 };
 
 let avatarColumnCapacityEnsured = false;
@@ -455,7 +461,6 @@ export const getUsers = async (): Promise<User[]> => {
         phone: row.phone,
         address: row.address,
         category: row.category ?? null,
-        password: row.password,
         avatarUrl: row.avatar_url,
         monthlyOrderTarget: row.monthly_order_target,
         monthlySalesTarget: Number(row.monthly_sales_target) || 0,
@@ -498,7 +503,6 @@ export const getUserById = async (userId: string): Promise<User | null> => {
         phone: row.phone,
         address: row.address,
         category: row.category ?? null,
-        password: row.password,
         avatarUrl: row.avatar_url,
         monthlyOrderTarget: row.monthly_order_target,
         monthlySalesTarget: Number(row.monthly_sales_target) || 0,
@@ -541,7 +545,6 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
         phone: row.phone,
         address: row.address,
         category: row.category ?? null,
-        password: row.password,
         avatarUrl: row.avatar_url,
         monthlyOrderTarget: row.monthly_order_target,
         monthlySalesTarget: Number(row.monthly_sales_target) || 0,

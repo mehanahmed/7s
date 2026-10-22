@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CalendarIcon, Video, MapPin, PhoneCall, Link2, User as UserIcon, Building2 } from 'lucide-react';
+import { Loader2, CalendarIcon, Video, MapPin, PhoneCall, Link2, User as UserIcon, Building2, Globe, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -50,6 +50,8 @@ export function MeetingDialog({ isOpen, onOpenChange, meeting, currentUser, onSa
   const [location, setLocation] = useState('');
   const [status, setStatus] = useState<MeetingStatus>('Scheduled');
   const [notes, setNotes] = useState('');
+  const [clientWebsite, setClientWebsite] = useState('');
+  const [serviceRequirement, setServiceRequirement] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -66,6 +68,8 @@ export function MeetingDialog({ isOpen, onOpenChange, meeting, currentUser, onSa
     setLocation(meeting?.location ?? '');
     setStatus((meeting?.status as MeetingStatus) ?? 'Scheduled');
     setNotes(meeting?.notes ?? '');
+    setClientWebsite(meeting?.clientWebsite ?? '');
+    setServiceRequirement(meeting?.serviceRequirement ?? '');
   }, [isOpen, meeting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,6 +86,8 @@ export function MeetingDialog({ isOpen, onOpenChange, meeting, currentUser, onSa
     const input: MeetingInput = {
       title, contactName, companyName, phone, meetingAt,
       durationMin: Number(durationMin) || 30, type, location, status, notes,
+      clientWebsite: clientWebsite.trim() || undefined,
+      serviceRequirement: serviceRequirement.trim() || undefined,
     };
     setIsSaving(true);
     try {
@@ -188,6 +194,36 @@ export function MeetingDialog({ isOpen, onOpenChange, meeting, currentUser, onSa
             <Label htmlFor="m-location" className="sr-only">{locationLabel}</Label>
             {type === 'Online' ? <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" aria-hidden /> : type === 'In-person' ? <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" aria-hidden /> : <PhoneCall className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" aria-hidden />}
             <Input id="m-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder={type === 'Online' ? 'Meeting link, e.g. https://meet.google.com/...' : locationLabel} disabled={isSaving} className="pl-10" />
+          </div>
+
+          {/* Client Website / Page URL & Service Requirement */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="relative">
+              <Label htmlFor="m-website" className="sr-only">Client Website / Page</Label>
+              <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                id="m-website"
+                type="text"
+                value={clientWebsite}
+                onChange={(e) => setClientWebsite(e.target.value)}
+                placeholder="Client Website / Facebook Page URL"
+                disabled={isSaving}
+                className="pl-10"
+              />
+            </div>
+            <div className="relative">
+              <Label htmlFor="m-service" className="sr-only">Service Requirement</Label>
+              <FileText className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                id="m-service"
+                type="text"
+                value={serviceRequirement}
+                onChange={(e) => setServiceRequirement(e.target.value)}
+                placeholder="Service Requirement / Note"
+                disabled={isSaving}
+                className="pl-10"
+              />
+            </div>
           </div>
 
           {/* who */}

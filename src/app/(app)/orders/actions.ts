@@ -26,7 +26,8 @@ import { sendTelegramMessage } from "@/lib/notification-utils"; // Import the te
 import { getIO } from "@/lib/socket-io";
 import { getAppUrl } from "@/lib/server-utils";
 import { getClientPayments, deleteClientPayment, deleteClientPaymentsBatch } from "@/lib/client-payment-service";
-import { guard } from '@/lib/guard';
+import { guard, requireRole } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 
 interface CreateOrderDialogFormData {
   jobId: string;
@@ -562,16 +563,20 @@ export async function assignDrToOrderAction(
 
 export async function deleteOrderAction(
   orderId: string,
-  currentUser: User
+  currentUser?: User
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
+  }
   try {
     if (!orderId) {
       return { success: false, error: "Order ID is required for deletion." };
     }
 
     const settings = await getGlobalSettings();
-    const canDelete = currentUser.role === 'SYSTEM_ADMIN' || (settings.rolesAllowedToDeleteOrders?.includes(currentUser.role) ?? false);
+    const canDelete = sessionUser.role === 'SYSTEM_ADMIN' || (settings.rolesAllowedToDeleteOrders?.includes(sessionUser.role) ?? false);
 
     if (!canDelete) {
       return { success: false, error: "You do not have permission to delete this order." };
@@ -582,7 +587,7 @@ export async function deleteOrderAction(
       return { success: false, error: "Order not found." };
     }
 
-    const success = await deleteOrderFromDb(orderId, currentUser.id);
+    const success = await deleteOrderFromDb(orderId, sessionUser.id);
     if (success) {
       revalidatePath("/(app)/orders");
       revalidatePath("/(app)/dashboard");
@@ -618,6 +623,7 @@ export async function getDeletedOrdersAction(): Promise<TrackingLink[]> {
 
 export async function restoreOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
   await guard();
+  await requireRole(['SYSTEM_ADMIN', 'ADMIN']);
   const success = await restoreOrderFromDb(orderId);
   if (success) {
     revalidatePath("/(app)/orders");
@@ -641,6 +647,7 @@ export async function restoreOrderAction(orderId: string): Promise<{ success: bo
 
 export async function permanentlyDeleteOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
   await guard();
+  await requireRole(['SYSTEM_ADMIN']);
   const success = await permanentlyDeleteOrderFromDb(orderId);
   if (success) {
     revalidatePath("/(app)/orders");

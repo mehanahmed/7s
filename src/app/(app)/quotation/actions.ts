@@ -18,7 +18,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { parseISO } from 'date-fns';
 import { getUserById as getUserFromDb } from "@/lib/user-service";
 import { getModels } from '@/lib/service-options-service';
-import { guard } from '@/lib/guard';
+import { guard, requireRole } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 
 
 
@@ -374,22 +375,26 @@ export async function updateQuotationStatusAction(
 
 export async function deleteQuotationAction(
   quotationId: string,
-  currentUser: User
+  currentUser?: User
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
+  }
   try {
     if (!quotationId) {
       return { success: false, error: "Quotation ID is required for deletion." };
     }
 
     const settings = await getGlobalSettings();
-    const canDelete = currentUser.role === 'SYSTEM_ADMIN' || (settings.rolesAllowedToDeleteOrders?.includes(currentUser.role) ?? false);
+    const canDelete = sessionUser.role === 'SYSTEM_ADMIN' || (settings.rolesAllowedToDeleteOrders?.includes(sessionUser.role) ?? false);
 
     if (!canDelete) {
       return { success: false, error: "You do not have permission to delete this quotation." };
     }
 
-    const success = await deleteQuotationFromDb(quotationId, currentUser.id);
+    const success = await deleteQuotationFromDb(quotationId, sessionUser.id);
     if (success) {
       revalidatePath("/(app)/quotation");
       return { success: true };
@@ -409,6 +414,7 @@ export async function getDeletedQuotationsAction(): Promise<TrackingLink[]> {
 
 export async function restoreQuotationAction(quotationId: string): Promise<{ success: boolean; error?: string }> {
   await guard();
+  await requireRole(['SYSTEM_ADMIN', 'ADMIN']);
   const success = await restoreQuotationFromDb(quotationId);
   if (success) {
     revalidatePath("/(app)/quotation");
@@ -419,6 +425,7 @@ export async function restoreQuotationAction(quotationId: string): Promise<{ suc
 
 export async function permanentlyDeleteQuotationAction(quotationId: string): Promise<{ success: boolean; error?: string }> {
   await guard();
+  await requireRole(['SYSTEM_ADMIN']);
   const success = await permanentlyDeleteQuotationFromDb(quotationId);
   if (success) {
     revalidatePath("/(app)/quotation");

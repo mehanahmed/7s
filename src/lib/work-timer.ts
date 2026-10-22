@@ -28,7 +28,9 @@ export const pauseWorkTimer = (state: WorkTimerState, now: number): WorkTimerSta
   ({ elapsedMs: elapsedWorkTime(state, now), startedAt: null });
 
 export function formatWorkTime(elapsedMs: number): string {
-  const seconds = Math.floor(elapsedMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }

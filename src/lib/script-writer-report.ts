@@ -20,7 +20,7 @@ export function calculateScriptWriterReport(orders: TrackingLink[], users: User[
   }
   let assigned = 0, completed = 0, inWriting = 0, onHold = 0, newAssignments = 0, writingMs = 0, timedCompletions = 0;
   const dailyCompletions = new Map<string, number>();
-  const attention: { id: string; companyName: string; writerId: string; writerName: string; stage: 'On Script' | 'On Hold'; deadline: string | null; priority: 'Overdue' | 'Due today' | 'On hold'; priorityOrder: number }[] = [];
+  const attention: { id: string; companyName: string; writerId: string; writerName: string; stage: 'On Script' | 'Approval Period' | 'On Hold'; deadline: string | null; priority: 'Overdue' | 'Due today' | 'On hold'; priorityOrder: number }[] = [];
 
   for (const order of orders) {
     if (order.currentStatus === CANCELLED_STATUS_ID) continue;
@@ -60,7 +60,7 @@ export function calculateScriptWriterReport(orders: TrackingLink[], users: User[
     let priorityOrder = held ? 2 : 3;
     if (deadline && endOfDay(deadline) < startOfDay(now)) { priority = 'Overdue'; priorityOrder = 0; }
     else if (deadline && startOfDay(deadline).getTime() === startOfDay(now).getTime()) { priority = 'Due today'; priorityOrder = 1; }
-    if (priority) attention.push({ id: order.id, companyName: order.companyName, writerId: writer.id, writerName: row.name, stage: held ? 'On Hold' : 'On Script', deadline: deadline ? order.acceptedDeliveryDate! : null, priority, priorityOrder });
+    if (priority) attention.push({ id: order.id, companyName: order.companyName, writerId: writer.id, writerName: row.name, stage: held ? 'Approval Period' : 'On Script', deadline: deadline ? order.acceptedDeliveryDate! : null, priority, priorityOrder });
   }
   const performance = Array.from(rows.values()).map(row => ({ ...row,
     completionPercent: row.assigned > 0 ? row.completed / row.assigned * 100 : 0,

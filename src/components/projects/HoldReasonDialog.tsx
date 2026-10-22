@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -31,24 +30,26 @@ export function HoldReasonDialog({ isOpen, onOpenChange, onConfirm }: HoldReason
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reason for Hold</DialogTitle>
+          <DialogTitle>Move to Approval Period</DialogTitle>
           <DialogDescription>
-            Please provide a reason for putting this project on hold. This will be logged in the order history.
+            Please provide a reason or note for placing this project into the approval period. This will be logged in the order history.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
-          <Label htmlFor="hold-reason">Hold Reason</Label>
+          <Label htmlFor="hold-reason">Approval Note / Reason</Label>
           <Textarea
             id="hold-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g., Awaiting client feedback on design..."
+            placeholder="e.g., Awaiting client review and approval of the script..."
             className="mt-1"
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleConfirm} disabled={!reason.trim()}>Confirm Hold</Button>
+          <Button onClick={handleConfirm} disabled={!reason.trim()} className="bg-amber-600 hover:bg-amber-700 text-white">
+            Confirm Approval Period
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -53,3 +53,7 @@ scratch/
 !.env.example
 *.log
 
+# bug hunter audits and caches
+.bug-hunter/
+
+

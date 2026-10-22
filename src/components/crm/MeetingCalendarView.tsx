@@ -4,7 +4,7 @@ import React from 'react';
 import {
   addDays, addMonths, format, isSameMonth, isToday, startOfMonth, startOfWeek, subMonths,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Edit, ExternalLink, Plus, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, ExternalLink, Plus, Search, Globe, FileText } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,6 +76,23 @@ function DayCell({ date, inMonth, items, onEdit }: { date: Date; inMonth: boolea
                 <p className="ml-4 truncate text-xs text-muted-foreground">
                   {[m.contactName, m.companyName].filter(Boolean).join(' · ') || m.type} · {m.status}
                 </p>
+                {m.clientWebsite && (
+                  <p className="ml-4 truncate text-xs text-primary">
+                    <a
+                      href={m.clientWebsite.startsWith('http') ? m.clientWebsite : `https://${m.clientWebsite}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 hover:underline"
+                    >
+                      <Globe className="h-3 w-3 shrink-0" /> {m.clientWebsite}
+                    </a>
+                  </p>
+                )}
+                {m.serviceRequirement && (
+                  <p className="ml-4 truncate text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground/80">Req:</span> {m.serviceRequirement}
+                  </p>
+                )}
                 <div className="mt-1 flex justify-end gap-1">
                   {isUrl(m.location) && (
                     <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs">

@@ -23,7 +23,7 @@ export function calculateCinematographerReport(orders: TrackingLink[], users: Us
   }
   let assigned = 0, completed = 0, inProduction = 0, onHold = 0, newAssignments = 0, productionMs = 0, timedCompletions = 0;
   const dailyCompletions = new Map<string, number>();
-  const attention: { id: string; companyName: string; cinematographerId: string; cinematographerName: string; stage: 'Cinematographer' | 'On Hold'; deadline: string | null; priority: 'Overdue' | 'Due today' | 'On hold'; priorityOrder: number }[] = [];
+  const attention: { id: string; companyName: string; cinematographerId: string; cinematographerName: string; stage: 'Cinematographer' | 'Approval Period' | 'On Hold'; deadline: string | null; priority: 'Overdue' | 'Due today' | 'On hold'; priorityOrder: number }[] = [];
 
   for (const order of orders) {
     if (order.currentStatus === CANCELLED_STATUS_ID) continue;
@@ -63,7 +63,7 @@ export function calculateCinematographerReport(orders: TrackingLink[], users: Us
     let priorityOrder = held ? 2 : 3;
     if (deadline && endOfDay(deadline) < startOfDay(now)) { priority = 'Overdue'; priorityOrder = 0; }
     else if (deadline && startOfDay(deadline).getTime() === startOfDay(now).getTime()) { priority = 'Due today'; priorityOrder = 1; }
-    if (priority) attention.push({ id: order.id, companyName: order.companyName, cinematographerId: cinematographer.id, cinematographerName: row.name, stage: held ? 'On Hold' : 'Cinematographer', deadline: deadline ? order.acceptedDeliveryDate! : null, priority, priorityOrder });
+    if (priority) attention.push({ id: order.id, companyName: order.companyName, cinematographerId: cinematographer.id, cinematographerName: row.name, stage: held ? 'Approval Period' : 'Cinematographer', deadline: deadline ? order.acceptedDeliveryDate! : null, priority, priorityOrder });
   }
   const performance = Array.from(rows.values()).map(row => ({ ...row,
     completionPercent: row.assigned > 0 ? row.completed / row.assigned * 100 : 0,

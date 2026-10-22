@@ -19,6 +19,7 @@ import {
 import { getUserById } from '@/lib/user-service';
 import { getGlobalSettings, setTransactionCategories } from '@/lib/settings-service';
 import { guard } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 
 export async function updateTransactionCategoriesAction(categories: TransactionCategory[]): Promise<{ success: boolean; error?: string }> {
   await guard();
@@ -119,19 +120,22 @@ export async function addTransactionAction(
 
 export async function deleteTransactionAction(
   transactionId: string,
-  userIdVerifying: string,
-  userRoleVerifying: UserRole
+  userIdVerifying?: string,
+  userRoleVerifying?: UserRole
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
-  if (!userIdVerifying) {
-    return { success: false, error: "User not authenticated for deletion." };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
   }
+  const effectiveUserId = sessionUser.id;
+  const effectiveUserRole = sessionUser.role;
   try {
     const transaction = await getTransactionById(transactionId);
     if (!transaction) {
       return { success: false, error: "Transaction not found." };
     }
-    if (userRoleVerifying === 'SYSTEM_ADMIN') {
+    if (effectiveUserRole === 'SYSTEM_ADMIN') {
       const success = await deleteTransactionService(transactionId);
       if (success) {
         revalidatePath("/(app)/expenses");
@@ -139,10 +143,10 @@ export async function deleteTransactionAction(
       }
       return { success: false, error: "Failed to delete transaction from database (Admin)." };
     }
-    if (transaction.type === 'income' && transaction.receivedFromUserId && userIdVerifying === transaction.userId && userRoleVerifying !== 'SYSTEM_ADMIN') {
+    if (transaction.type === 'income' && transaction.receivedFromUserId && effectiveUserId === transaction.userId && effectiveUserRole !== 'SYSTEM_ADMIN') {
       return { success: false, error: "Cannot delete income transactions received from system transfers." };
     }
-    if (transaction.userId !== userIdVerifying) {
+    if (transaction.userId !== effectiveUserId) {
       return { success: false, error: "You do not have permission to delete this transaction." };
     }
     const success = await deleteTransactionService(transactionId);
@@ -160,13 +164,16 @@ export async function deleteTransactionAction(
 export async function updateTransactionAction(
   transactionId: string,
   updates: Partial<Omit<Transaction, 'id' | 'userId' | 'createdAt'>>,
-  userIdVerifying: string,
-  userRoleVerifying: UserRole
+  userIdVerifying?: string,
+  userRoleVerifying?: UserRole
 ): Promise<{ success: boolean; error?: string }> {
   await guard();
-  if (!userIdVerifying) {
-    return { success: false, error: "User not authenticated for update." };
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return { success: false, error: "Unauthorized. Please log in." };
   }
+  const effectiveUserId = sessionUser.id;
+  const effectiveUserRole = sessionUser.role;
   if (updates.amount !== undefined && updates.amount <= 0) {
     return { success: false, error: "Amount must be a positive number." };
   }
@@ -181,7 +188,7 @@ export async function updateTransactionAction(
     if (sanitizedUpdates.documentUrl === '') sanitizedUpdates.documentUrl = null; // Allow removing documentUrl
 
 
-    if (userRoleVerifying === 'SYSTEM_ADMIN') {
+    if (effectiveUserRole === 'SYSTEM_ADMIN') {
       const success = await updateTransactionService(transactionId, sanitizedUpdates);
       if (success) {
         revalidatePath("/(app)/expenses");
@@ -189,10 +196,10 @@ export async function updateTransactionAction(
       }
       return { success: false, error: "Failed to update transaction (Admin)." };
     }
-    if (transaction.type === 'income' && transaction.receivedFromUserId && userIdVerifying === transaction.userId && userRoleVerifying !== 'SYSTEM_ADMIN') {
+    if (transaction.type === 'income' && transaction.receivedFromUserId && effectiveUserId === transaction.userId && effectiveUserRole !== 'SYSTEM_ADMIN') {
       return { success: false, error: "Cannot edit income transactions received from system transfers." };
     }
-    if (transaction.userId !== userIdVerifying) {
+    if (transaction.userId !== effectiveUserId) {
       return { success: false, error: "You do not have permission to edit this transaction." };
     }
 

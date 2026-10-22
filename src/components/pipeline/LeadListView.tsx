@@ -131,7 +131,7 @@ export function LeadListView({ leads, isLoading, currentUser, onViewLead, onDele
                             <TableHead>Category</TableHead>
                             <TableHead>Temperature</TableHead>
                             <TableHead>Assigned CR</TableHead>
-                            <TableHead>Last Modified</TableHead>
+                            <TableHead>Onboarding Date</TableHead>
                             <TableHead>Schedule</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -205,7 +205,7 @@ export function LeadListView({ leads, isLoading, currentUser, onViewLead, onDele
                                             <span>{lead.crmName}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{formatDateSafe(lead.categoryUpdatedAt || lead.date)}</TableCell>
+                                    <TableCell>{formatDateSafe(lead.date || lead.categoryUpdatedAt)}</TableCell>
                                     <TableCell>
                                         {scheduleDate ? (
                                             <Badge variant="outline" className={cn(

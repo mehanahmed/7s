@@ -239,12 +239,15 @@ export const updateProject = async (projectId: string, updates: Partial<Project>
   await guard();
   try {
     const results = await query<any[]>(`SELECT data_json FROM ${PROJECTS_TABLE} WHERE id = ?`, [projectId]);
-    if (results.length === 0) return false;
-
-    const currentData = typeof results[0].data_json === 'string' ? JSON.parse(results[0].data_json) : results[0].data_json;
+    const currentData = results.length > 0
+      ? (typeof results[0].data_json === 'string' ? JSON.parse(results[0].data_json) : results[0].data_json)
+      : { id: projectId };
     const finalData = { ...currentData, ...updates, updatedAt: formatISO(new Date()) };
 
-    await query(`UPDATE ${PROJECTS_TABLE} SET data_json = ? WHERE id = ?`, [JSON.stringify(finalData), projectId]);
+    await query(
+      `INSERT INTO ${PROJECTS_TABLE} (id, data_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE data_json = VALUES(data_json)`,
+      [projectId, JSON.stringify(finalData)]
+    );
     return true;
   } catch (error) {
     console.error(`[updateProject] Error updating project ${projectId} in MySQL:`, error);

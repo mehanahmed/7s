@@ -306,7 +306,7 @@ export interface ExpenseLoggingPermissions {
   allowedUserIds: string[];
 }
 
-export type ProjectStatusType = 'CR Clearance' | 'Operation Manager' | 'On Script' | 'On Hold' | 'Script Done' | 'Artist Booked' | 'Cinematographer' | 'CG Complete' | 'On Editor' | 'Client Revision' | 'Project Complete' | 'Due Payment' | 'Project Delivered';
+export type ProjectStatusType = 'CR Clearance' | 'Operation Manager' | 'Requirements Collection' | 'On Script' | 'Approval Period' | 'Script Done' | 'Artist Booked' | 'Cinematographer' | 'CG Complete' | 'On Editor' | 'Client Revision' | 'Project Complete' | 'Due Payment' | 'Project Delivered' | 'On Hold';
 
 export interface RoleBasedTarget {
   CR: number;
@@ -324,6 +324,9 @@ export interface LeadCategoryAccessSettings {
   roles: UserRole[];
   specialAccess: string[]; // Array of user IDs with special access
 }
+
+export type ArtistCategory = 'Male' | 'Female' | 'Child' | 'Influencer' | 'Celebrity' | string;
+export const DEFAULT_ARTIST_CATEGORIES: string[] = ['Male', 'Female', 'Child', 'Influencer', 'Celebrity'];
 
 export interface GlobalSettings {
   globalMonthlyOrderTarget: number;
@@ -358,6 +361,7 @@ export interface GlobalSettings {
   telegramRedirectDomain?: string | null;
   transactionCategories?: TransactionCategory[]; // New field
   isCourierNoteVisible?: boolean;
+  artistCategories?: string[]; // Custom categories added by admins
   designApprovalStatusIds?: string[];
   docsApprovalStatusIds?: string[];
   salaryTransferBankName?: string | null;
@@ -469,9 +473,14 @@ export interface Project {
 
   crClearanceAt?: string | null;
   coClearanceAt?: string | null;
+  requirementsCollectionAt?: string | null;
   cancelAt?: string | null;
   onDesignAt?: string | null;
   onHoldAt?: string | null;
+  approvalPeriodAt?: string | null;
+  pageUrl?: string | null;
+  websiteUrl?: string | null;
+  reference?: string | null;
   logisticsAt?: string | null;
   courierAt?: string | null;
   deliveredAt?: string | null;
@@ -782,6 +791,8 @@ export interface MeetingInput {
   contactName?: string | null;
   companyName?: string | null;
   phone?: string | null;
+  clientWebsite?: string | null;
+  serviceRequirement?: string | null;
   meetingAt: string; // "YYYY-MM-DDTHH:mm" local wall clock
   durationMin: number;
   type: MeetingType;

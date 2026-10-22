@@ -50,7 +50,8 @@ import {
   closestCorners,
   DragOverlay,
 } from '@dnd-kit/core';
-import { updateProjectStatusAction, getProjectDueAction } from '@/app/(app)/projects/actions';
+import { updateProjectStatusAction, getProjectDueAction, saveProjectRequirementsAction } from '@/app/(app)/projects/actions';
+import { RequirementsInputDialog } from '@/components/projects/RequirementsInputDialog';
 import { DeliveryPaymentDialog } from '@/components/projects/DeliveryPaymentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -88,8 +89,9 @@ const ProjectCard = dynamic(() => import('@/components/projects/ProjectCard').th
 const KANBAN_COLUMNS_CONFIG: Array<{ title: string; status: ProjectStatusType; icon: LucideIcon; headerBgClass: string; headerIconClass?: string; headerTextClass?: string }> = [
   { title: 'CR Clearance', status: 'CR Clearance', icon: ShieldCheck, headerBgClass: 'bg-sky-600', headerTextClass: 'text-sky-50' },
   { title: 'Operation Manager', status: 'Operation Manager', icon: UserCog, headerBgClass: 'bg-teal-600', headerTextClass: 'text-teal-50' },
+  { title: 'Requirements Collection', status: 'Requirements Collection', icon: ClipboardList, headerBgClass: 'bg-cyan-600', headerTextClass: 'text-cyan-50' },
   { title: 'On Script', status: 'On Script', icon: PenLine, headerBgClass: 'bg-purple-600', headerTextClass: 'text-purple-50' },
-  { title: 'On Hold', status: 'On Hold', icon: PauseCircle, headerBgClass: 'bg-yellow-500', headerTextClass: 'text-yellow-950' },
+  { title: 'Approval Period', status: 'Approval Period', icon: PauseCircle, headerBgClass: 'bg-yellow-500', headerTextClass: 'text-yellow-950' },
   { title: 'Script Done', status: 'Script Done', icon: FileCheck, headerBgClass: 'bg-violet-600', headerTextClass: 'text-violet-50' },
   { title: 'Artist Booked', status: 'Artist Booked', icon: UserCheck, headerBgClass: 'bg-pink-600', headerTextClass: 'text-pink-50' },
   { title: 'Cinematographer', status: 'Cinematographer', icon: Camera, headerBgClass: 'bg-blue-600', headerTextClass: 'text-blue-50' },
@@ -157,6 +159,7 @@ export function ProjectsKanbanClient() {
   const [proofTarget, setProofTarget] = useState<{ project: Project; status: ProjectStatusType } | null>(null);
   const [linkTarget, setLinkTarget] = useState<{ project: Project; status: ProjectStatusType } | null>(null);
   const [deliveryTarget, setDeliveryTarget] = useState<{ project: Project; due: number } | null>(null);
+  const [requirementsTarget, setRequirementsTarget] = useState<{ project: Project; status: ProjectStatusType } | null>(null);
   const [stageAssignTarget, setStageAssignTarget] = useState<{ project: Project; status: ProjectStatusType; notes?: string } | null>(null);
 
   const [projectToHold, setProjectToHold] = useState<Project | null>(null);
@@ -370,6 +373,12 @@ export function ProjectsKanbanClient() {
       }
     }
 
+    // Moving from CR Clearance to Operation Manager requires the Handover Requirements popup
+    if (originalStatus === 'CR Clearance' && newStatus === 'Operation Manager') {
+      setRequirementsTarget({ project, status: newStatus });
+      return;
+    }
+
     if (PROOF_REQUIRED_STAGES[newStatus]) {
       setProofTarget({ project, status: newStatus });
       return;
@@ -398,7 +407,7 @@ export function ProjectsKanbanClient() {
       return;
     }
 
-    if (newStatus === 'On Hold') {
+    if (newStatus === 'Approval Period' || (newStatus as any) === 'On Hold') {
       setProjectToHold(project);
       setIsHoldReasonDialogOpen(true);
       return;
@@ -871,12 +880,46 @@ export function ProjectsKanbanClient() {
         />
       )}
 
+      {requirementsTarget && (
+        <RequirementsInputDialog
+          isOpen={!!requirementsTarget}
+          onOpenChange={(open) => { if (!open) setRequirementsTarget(null); }}
+          project={requirementsTarget.project}
+          onConfirm={async (data) => {
+            const t = requirementsTarget;
+            setRequirementsTarget(null);
+
+            // 1. Save requirements to project persistent data
+            await saveProjectRequirementsAction(t.project.id, {
+              pageUrl: data.pageUrl,
+              websiteUrl: data.websiteUrl,
+              reference: data.reference,
+            });
+
+            // 2. Format transition note
+            const noteParts = [];
+            if (data.proofUrl) noteParts.push(`Proof: ${data.proofUrl}`);
+            if (data.pageUrl) noteParts.push(`Page: ${data.pageUrl}`);
+            if (data.websiteUrl) noteParts.push(`Website: ${data.websiteUrl}`);
+            if (data.reference) noteParts.push(`Ref: ${data.reference}`);
+            const note = noteParts.join(' | ');
+
+            // 3. Proceed to select Operation Manager
+            if (STAGE_ASSIGN_ROLE[t.status]) {
+              setStageAssignTarget({ project: t.project, status: t.status, notes: note });
+            } else {
+              handleConfirmStatusUpdate(t.project, t.status, note);
+            }
+          }}
+        />
+      )}
+
       {projectToHold && (
         <HoldReasonDialog
           isOpen={isHoldReasonDialogOpen}
           onOpenChange={setIsHoldReasonDialogOpen}
           onConfirm={(reason) => {
-            handleConfirmStatusUpdate(projectToHold, 'On Hold', reason);
+            handleConfirmStatusUpdate(projectToHold, 'Approval Period', reason);
             setIsHoldReasonDialogOpen(false);
             setProjectToHold(null);
           }}

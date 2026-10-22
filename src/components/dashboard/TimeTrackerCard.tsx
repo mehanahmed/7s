@@ -68,7 +68,7 @@ export function TimeTrackerCard({ userId }: { userId: string }) {
           <circle cx="92" cy="92" r="72" fill="none" stroke="#ffda62" strokeWidth="14" strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`} strokeDashoffset={circumference * (1 - progress)} transform="rotate(-90 92 92)" className={progress === 0 ? 'opacity-0' : 'opacity-100'} />
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <span className="text-[34px] font-normal leading-none tracking-tight tabular-nums">{formatWorkTime(elapsedMs)}</span>
+          <span className="text-[28px] sm:text-[30px] font-normal leading-none tracking-tight tabular-nums">{formatWorkTime(elapsedMs)}</span>
           <span className="text-[11px] text-stone-500">Work Time</span>
         </div>
       </div>

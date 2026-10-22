@@ -48,7 +48,7 @@ import {
   getAllTransactionsAction,
   updateTransactionCategoriesAction,
 } from './actions';
-import { DateRangePicker, type PredefinedRange } from '@/components/dashboard/date-range-picker';
+import { DateRangePicker3, type PredefinedRange } from '@/components/dashboard/date-range-picker3';
 import type { DateRange } from "react-day-picker";
 import { isWithinInterval, parseISO, subDays, format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -126,11 +126,10 @@ export default function FinanceManagerPage() {
   const [transactionSearchTerm, setTransactionSearchTerm] = useState('');
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>('all');
 
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
-
-  useEffect(() => {
-    setSelectedDateRange({ from: subDays(new Date(), 29), to: new Date() });
-  }, []);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(() => ({
+    from: subDays(new Date(), 29),
+    to: new Date(),
+  }));
 
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
@@ -286,16 +285,17 @@ export default function FinanceManagerPage() {
       results = results.filter(t => t.userId === currentUser.id);
     }
 
-    if (selectedDateRange?.from && selectedDateRange?.to) {
+    if (selectedDateRange?.from) {
       const startDate = new Date(selectedDateRange.from);
       startDate.setHours(0, 0, 0, 0);
 
-      const endDate = new Date(selectedDateRange.to);
+      const endDate = new Date(selectedDateRange.to ?? selectedDateRange.from);
       endDate.setHours(23, 59, 59, 999);
 
       results = results.filter(t => {
         try {
-          const transactionDate = parseISO(t.date);
+          const transactionDate = new Date(t.date);
+          if (isNaN(transactionDate.getTime())) return false;
           return isWithinInterval(transactionDate, { start: startDate, end: endDate });
         } catch (e) {
           console.error("Error parsing transaction date for filtering:", t.date, e);
@@ -505,10 +505,12 @@ export default function FinanceManagerPage() {
           </Select>
         </div>
         <div className="w-full sm:w-auto grow sm:grow-0 order-4 sm:order-none">
-          {selectedDateRange ? (
-            <DateRangePicker
+          {isClient ? (
+            <DateRangePicker3
               initialRange={selectedDateRange}
               onDateRangeChange={handleDateRangeChange}
+              compactOnMobile={true}
+              className="h-10"
             />
           ) : (
             <Skeleton className="h-10 w-full sm:w-[260px]" />

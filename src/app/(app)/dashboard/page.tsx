@@ -9,6 +9,8 @@ import { ScriptAssignmentChart } from '@/components/dashboard/ScriptAssignmentCh
 import { vatAmountFor } from '@/lib/vat';
 import { PROJECT_STAGES } from '@/lib/project-stages';
 import { getScriptWriterSummary } from '@/lib/script-writer-summary';
+import { calculateCinematographerReport } from '@/lib/cinematographer-report';
+import { calculateEditorReport } from '@/lib/editor-report';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/auth-context';
@@ -67,7 +69,7 @@ import {
   Clapperboard,
   RefreshCcw,
   CheckCircle2,
-  Wallet, XCircle, CalendarClock } from 'lucide-react';
+  Film, Scissors, Wallet, XCircle, CalendarClock, BarChart3, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import {
   ResponsiveContainer,
@@ -247,8 +249,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, icon: Icon, ico
 const ALL_PROJECT_STATUSES_CONFIG: Array<{ title: string; status: ProjectStatusType; icon: React.ElementType; color: string; gradient: string; shadow: string; }> = [
   { title: 'CR Clearance', status: 'CR Clearance', icon: ShieldCheck, color: '#3b82f6', gradient: 'linear-gradient(to right, #3b82f6, #60a5fa)', shadow: '0 4px 15px 0 rgba(59, 130, 246, 0.4)' },
   { title: 'Operation Manager', status: 'Operation Manager', icon: UserCog, color: '#10b981', gradient: 'linear-gradient(to right, #10b981, #34d399)', shadow: '0 4px 15px 0 rgba(16, 185, 129, 0.4)' },
+  { title: 'Requirements Collection', status: 'Requirements Collection', icon: ClipboardList, color: '#06b6d4', gradient: 'linear-gradient(to right, #06b6d4, #22d3ee)', shadow: '0 4px 15px 0 rgba(6, 182, 212, 0.4)' },
   { title: 'On Script', status: 'On Script', icon: PenLine, color: '#8b5cf6', gradient: 'linear-gradient(to right, #8b5cf6, #a78bfa)', shadow: '0 4px 15px 0 rgba(139, 92, 246, 0.4)' },
-  { title: 'On Hold', status: 'On Hold', icon: PauseCircle, color: '#f97316', gradient: 'linear-gradient(to right, #f97316, #fb923c)', shadow: '0 4px 15px 0 rgba(249, 115, 22, 0.4)' },
+  { title: 'Approval Period', status: 'Approval Period', icon: PauseCircle, color: '#f97316', gradient: 'linear-gradient(to right, #f97316, #fb923c)', shadow: '0 4px 15px 0 rgba(249, 115, 22, 0.4)' },
   { title: 'Script Done', status: 'Script Done', icon: FileCheck, color: '#7c3aed', gradient: 'linear-gradient(to right, #7c3aed, #a78bfa)', shadow: '0 4px 15px 0 rgba(124, 58, 237, 0.4)' },
   { title: 'Artist Booked', status: 'Artist Booked', icon: UserCheck, color: '#db2777', gradient: 'linear-gradient(to right, #db2777, #f472b6)', shadow: '0 4px 15px 0 rgba(219, 39, 119, 0.4)' },
   { title: 'Cinematographer', status: 'Cinematographer', icon: Camera, color: '#2563eb', gradient: 'linear-gradient(to right, #2563eb, #60a5fa)', shadow: '0 4px 15px 0 rgba(37, 99, 235, 0.4)' },
@@ -384,6 +387,7 @@ function DashboardContent() {
 
 
   const isDesignerRepOrLrOrCo = (currentUser && isDrRole(currentUser.role)) || currentUser?.role === 'LR' || currentUser?.role === 'CO';
+  const isProductionRole = currentUser?.role === 'SW' || currentUser?.role === 'CG' || currentUser?.role === 'EDITOR';
 
 
   const fetchDashboardData = useCallback(async () => {
@@ -443,13 +447,19 @@ function DashboardContent() {
   const { allOrders = [], allYearOrders = [], allModels = [], allUsers = [], allProjects = [], globalSettings = null, allLeads = [], allTodayScheduledLeads = [], allTasks = [], allFeedback = [], allTransactions = [], allPaymentMethods = [] } = queryData || {};
   const [summaryNow, setSummaryNow] = useState(() => new Date());
   useEffect(() => {
-    if (currentUser?.role !== 'SW') return;
+    if (!isProductionRole) return;
     const timer = window.setInterval(() => setSummaryNow(new Date()), 60_000);
     return () => window.clearInterval(timer);
-  }, [currentUser?.role]);
+  }, [isProductionRole]);
   const scriptWriterSummary = useMemo(() => currentUser?.role === 'SW'
     ? getScriptWriterSummary(allProjects, allYearOrders, currentUser.id, selectedDateRange, summaryNow)
     : null, [allProjects, allYearOrders, currentUser?.role, currentUser?.id, selectedDateRange, summaryNow]);
+  const cinematographerSummary = useMemo(() => currentUser?.role === 'CG'
+    ? calculateCinematographerReport(allYearOrders, allUsers, currentUser.id, selectedDateRange, summaryNow)
+    : null, [allYearOrders, allUsers, currentUser?.role, currentUser?.id, selectedDateRange, summaryNow]);
+  const editorSummary = useMemo(() => currentUser?.role === 'EDITOR'
+    ? calculateEditorReport(allYearOrders, allUsers, currentUser.id, selectedDateRange, summaryNow)
+    : null, [allYearOrders, allUsers, currentUser?.role, currentUser?.id, selectedDateRange, summaryNow]);
   const allCrmUsers = useMemo(() => allUsers.filter(u => u.role === 'CR' && !u.isBanned), [allUsers]);
 
   const getDateRangeInterval = () => {
@@ -1676,6 +1686,45 @@ function DashboardContent() {
           </div>
         )}
 
+        {currentUser?.role === 'CG' && cinematographerSummary && (
+          <div className="space-y-4 print:hidden">
+            <Card className="shadow-sm bg-card rounded-xl sm:rounded-lg">
+              <CardContent className="p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Camera className="h-4 w-4 text-primary" />Cinematography assignments
+                </span>
+                {selectedDateRange ? <DateRangePicker initialRange={selectedDateRange} onDateRangeChange={handleDateRangeChange} /> : <Skeleton className="h-10 w-[200px]" />}
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              <SummaryCard title="Total Assigned Shoots" value={cinematographerSummary.assigned.toLocaleString()} icon={Camera} iconColorClass="text-blue-600" circleBgClass="bg-blue-100 dark:bg-blue-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="Footage Completed" value={cinematographerSummary.completed.toLocaleString()} icon={CheckCircle2} iconColorClass="text-emerald-600" circleBgClass="bg-emerald-100 dark:bg-emerald-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="In Production / Pending" value={cinematographerSummary.pending.toLocaleString()} icon={Clock} iconColorClass="text-amber-600" circleBgClass="bg-amber-100 dark:bg-amber-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="Avg Production Time" value={cinematographerSummary.averageProductionDays ? `${cinematographerSummary.averageProductionDays.toFixed(1)} days` : '—'} icon={BarChart3} iconColorClass="text-violet-600" circleBgClass="bg-violet-100 dark:bg-violet-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+            </div>
+          </div>
+        )}
+
+        {currentUser?.role === 'EDITOR' && editorSummary && (
+          <div className="space-y-4 print:hidden">
+            <Card className="shadow-sm bg-card rounded-xl sm:rounded-lg">
+              <CardContent className="p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Scissors className="h-4 w-4 text-primary" />Editing assignments
+                </span>
+                {selectedDateRange ? <DateRangePicker initialRange={selectedDateRange} onDateRangeChange={handleDateRangeChange} /> : <Skeleton className="h-10 w-[200px]" />}
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6">
+              <SummaryCard title="Total Assigned" value={editorSummary.assigned.toLocaleString()} icon={Film} iconColorClass="text-blue-600" circleBgClass="bg-blue-100 dark:bg-blue-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="Edits Completed" value={editorSummary.completed.toLocaleString()} icon={CheckCircle2} iconColorClass="text-emerald-600" circleBgClass="bg-emerald-100 dark:bg-emerald-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="In Editing" value={editorSummary.inEditing.toLocaleString()} icon={Clock} iconColorClass="text-indigo-600" circleBgClass="bg-indigo-100 dark:bg-indigo-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="Client Revisions" value={editorSummary.revisions.toLocaleString()} icon={RefreshCcw} iconColorClass="text-orange-600" circleBgClass="bg-orange-100 dark:bg-orange-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+              <SummaryCard title="Avg Editing Time" value={editorSummary.averageEditingDays ? `${editorSummary.averageEditingDays.toFixed(1)} days` : '—'} icon={BarChart3} iconColorClass="text-violet-600" circleBgClass="bg-violet-100 dark:bg-violet-500/20" isLoading={isLoadingContent} currentUser={currentUser} />
+            </div>
+          </div>
+        )}
+
         {!isDesignerRepOrLrOrCo && (
           <>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 print:hidden">
@@ -1957,16 +2006,172 @@ function DashboardContent() {
 
 
 
-        {(!isDesignerRepOrLrOrCo || currentUser?.role === 'SW') && (
-          <div className={cn("grid grid-cols-1 gap-6 !mt-1.5 print:hidden", currentUser?.role === 'SW' ? 'lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start' : !(currentUser && isDrRole(currentUser.role)) && currentUser?.role !== 'VENDOR' && currentUser?.role !== 'LR' ? 'xl:grid-cols-2' : 'xl:grid-cols-1')}>
-            {currentUser?.role === 'SW' && <TimeTrackerCard key={currentUser.id} userId={currentUser.id} />}
+        {(!isDesignerRepOrLrOrCo || isProductionRole) && (
+          <div
+            style={isProductionRole ? { marginTop: '1rem' } : undefined}
+            className={cn("grid grid-cols-1 gap-6 print:hidden", isProductionRole ? 'lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start !mt-4' : !(currentUser && isDrRole(currentUser.role)) && currentUser?.role !== 'VENDOR' && currentUser?.role !== 'LR' ? 'xl:grid-cols-2' : 'xl:grid-cols-1')}
+          >
+            {isProductionRole && <TimeTrackerCard key={currentUser.id} userId={currentUser.id} />}
             {currentUser?.role === 'SW' && scriptWriterSummary && (
               <div className="min-w-0">
                 <ScriptAssignmentChart projects={allProjects} orders={allYearOrders} userId={currentUser.id} now={summaryNow} isLoading={isLoadingContent} />
               </div>
             )}
+            {currentUser?.role === 'CG' && cinematographerSummary && (
+              <div className="min-w-0">
+                <Card className="rounded-2xl border-none sm:border border-border/60 bg-card shadow-sm sm:shadow-md overflow-hidden">
+                  <CardHeader className="p-4 sm:p-5 pb-3 border-b border-border/40">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600">
+                          <Clapperboard className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base sm:text-lg font-semibold tracking-tight">Active Shoots & Tasks</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground mt-0.5">Projects assigned to you for cinematography & shoot</CardDescription>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" asChild className="gap-1.5 text-xs text-primary h-8">
+                        <Link href="/projects">
+                          View in Projects <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-5 pt-3">
+                    {cinematographerSummary.attention.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b text-muted-foreground font-medium">
+                              <th className="py-2.5 pr-4">Project ID</th>
+                              <th className="py-2.5 pr-4">Client / Company</th>
+                              <th className="py-2.5 pr-4">Stage</th>
+                              <th className="py-2.5 pr-4">Deadline</th>
+                              <th className="py-2.5 pr-2 text-right">Priority</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40">
+                            {cinematographerSummary.attention.slice(0, 6).map((item) => (
+                              <tr key={item.id} className="hover:bg-muted/40 transition-colors">
+                                <td className="py-2.5 pr-4 font-semibold text-primary">
+                                  <Link href={`/projects#${encodeURIComponent(item.id)}`} className="hover:underline">
+                                    {item.id}
+                                  </Link>
+                                </td>
+                                <td className="py-2.5 pr-4 text-foreground font-medium">{item.companyName}</td>
+                                <td className="py-2.5 pr-4">
+                                  <Badge variant="secondary" className={(item.stage === 'On Hold' || item.stage === 'Approval Period') ? 'bg-amber-100 text-amber-800' : 'bg-blue-600 text-white'}>
+                                    {item.stage}
+                                  </Badge>
+                                </td>
+                                <td className="py-2.5 pr-4 text-muted-foreground">
+                                  {item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : 'Not set'}
+                                </td>
+                                <td className="py-2.5 pr-2 text-right">
+                                  <Badge variant="secondary" className={item.priority === 'Overdue' ? 'bg-red-100 text-red-700' : item.priority === 'Due today' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}>
+                                    {item.priority}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="mx-auto w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 mb-2">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground">All Shoots Are Up to Date!</p>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                          No overdue or pending footage requiring immediate attention for the selected period.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-            <Card className={cn("bg-card/95 border-none sm:border border-border/30 shadow-xl sm:shadow-lg rounded-2xl sm:rounded-lg overflow-hidden group relative", currentUser?.role === 'SW' && 'lg:col-span-2')}>
+            {currentUser?.role === 'EDITOR' && editorSummary && (
+              <div className="min-w-0">
+                <Card className="rounded-2xl border-none sm:border border-border/60 bg-card shadow-sm sm:shadow-md overflow-hidden">
+                  <CardHeader className="p-4 sm:p-5 pb-3 border-b border-border/40">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600">
+                          <Scissors className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base sm:text-lg font-semibold tracking-tight">Active Edits & Revisions</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground mt-0.5">Projects assigned to you for video editing & client revisions</CardDescription>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" asChild className="gap-1.5 text-xs text-primary h-8">
+                        <Link href="/projects">
+                          View in Projects <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-5 pt-3">
+                    {editorSummary.attention.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b text-muted-foreground font-medium">
+                              <th className="py-2.5 pr-4">Project ID</th>
+                              <th className="py-2.5 pr-4">Client / Company</th>
+                              <th className="py-2.5 pr-4">Stage</th>
+                              <th className="py-2.5 pr-4">Deadline</th>
+                              <th className="py-2.5 pr-2 text-right">Priority</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40">
+                            {editorSummary.attention.slice(0, 6).map((item) => (
+                              <tr key={item.id} className="hover:bg-muted/40 transition-colors">
+                                <td className="py-2.5 pr-4 font-semibold text-primary">
+                                  <Link href={`/projects#${encodeURIComponent(item.id)}`} className="hover:underline">
+                                    {item.id}
+                                  </Link>
+                                </td>
+                                <td className="py-2.5 pr-4 text-foreground font-medium">{item.companyName}</td>
+                                <td className="py-2.5 pr-4">
+                                  <Badge variant="secondary" className={(item.stage === 'On Hold' || item.stage === 'Approval Period') ? 'bg-amber-100 text-amber-800' : item.stage === 'Client Revision' ? 'bg-orange-600 text-white' : 'bg-indigo-600 text-white'}>
+                                    {item.stage}
+                                  </Badge>
+                                </td>
+                                <td className="py-2.5 pr-4 text-muted-foreground">
+                                  {item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : 'Not set'}
+                                </td>
+                                <td className="py-2.5 pr-2 text-right">
+                                  <Badge variant="secondary" className={item.priority === 'Overdue' ? 'bg-red-100 text-red-700' : item.priority === 'Due today' ? 'bg-amber-100 text-amber-800' : item.priority === 'Revision pending' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-600'}>
+                                    {item.priority}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="mx-auto w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 mb-2">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground">All Edits Are Up to Date!</p>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                          No overdue edits or pending revisions requiring immediate attention for the selected period.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            <Card className={cn("bg-card/95 border-none sm:border border-border/30 shadow-xl sm:shadow-lg rounded-2xl sm:rounded-lg overflow-hidden group relative", isProductionRole && 'lg:col-span-2')}>
               {/* Premium background highlight for mobile */}
               <div className="absolute inset-0 opacity-[0.02] sm:hidden bg-gradient-to-br from-primary via-transparent to-primary pointer-events-none" />
 

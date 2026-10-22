@@ -84,6 +84,7 @@ const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   docsApprovalStatusIds: [],
   salaryTransferBankName: "UNITED COMM. BANK",
   salaryTransferBankAccountNo: "0872101000007053",
+  artistCategories: [],
 };
 
 export async function getGlobalSettings(): Promise<GlobalSettings> {
@@ -309,4 +310,9 @@ export async function setPaymentGatewaySettings(settings: {
     paymentGatewayEmi: settings.emi,
     paymentGatewayEnabled: settings.enabled,
   });
+}
+
+export async function setArtistCategories(categories: string[]): Promise<boolean> {
+  await guard();
+  return updateSettings({ artistCategories: categories });
 }

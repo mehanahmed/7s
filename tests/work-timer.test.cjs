@@ -45,8 +45,9 @@ test('reset is paused and zero; clock rollback cannot subtract recorded time', (
   assert.equal(elapsedWorkTime(emptyWorkTimer(), 123456), 0);
   assert.equal(elapsedWorkTime({ elapsedMs: 5000, startedAt: 10000 }, 9000), 5000);
 });
-test('display formats minutes and seconds without wrapping at one hour', () => {
-  assert.equal(formatWorkTime(0), '00:00');
-  assert.equal(formatWorkTime(155000), '02:35');
-  assert.equal(formatWorkTime(3601000), '60:01');
+test('display formats hours, minutes, and seconds (h:m:s)', () => {
+  assert.equal(formatWorkTime(0), '00:00:00');
+  assert.equal(formatWorkTime(155000), '00:02:35');
+  assert.equal(formatWorkTime(3601000), '01:00:01');
+  assert.equal(formatWorkTime(24862000), '06:54:22');
 });

@@ -6,6 +6,17 @@ import { vatAmountFor } from './vat';
 
 const amount = (value: unknown) => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 
+export interface OutstandingInvoice {
+  id: string;
+  companyName: string;
+  crmName: string;
+  crmUserId: string;
+  createdAt: string;
+  totalBilled: number;
+  paidAmount: number;
+  due: number;
+}
+
 /** Include recorded sales contacts even when they currently have an admin/other role.
  * Historical sales must not disappear when a user's role or suspension changes.
  */
@@ -28,7 +39,7 @@ export function calculateSalesExecutiveSummary(orders: TrackingLink[], users: Us
     (order.orderItems ?? []).reduce((sum, item) => sum + (item.isGift ? 0 : amount(item.lineItemTotalPrice)), 0) - amount(order.specialClientDiscount)
   );
   let totalSales = 0, billed = 0, collected = 0, outstanding = 0, completedOrders = 0, orderCount = 0;
-  const outstandingInvoices: { id: string; companyName: string; due: number }[] = [];
+  const outstandingInvoices: OutstandingInvoice[] = [];
   const completionStatuses = settings?.crmCompletionStatusIds ?? [];
   for (const order of eligible.filter(order => inPeriod(order.createdAt))) {
     orderCount++;
@@ -39,7 +50,18 @@ export function calculateSalesExecutiveSummary(orders: TrackingLink[], users: Us
     billed += invoice;
     collected += Math.min(paid, invoice);
     outstanding += Math.max(0, invoice - paid);
-    if (invoice > paid) outstandingInvoices.push({ id: order.id, companyName: order.companyName, due: invoice - paid });
+    if (invoice > paid) {
+      outstandingInvoices.push({
+        id: order.id,
+        companyName: order.companyName,
+        crmName: order.crmUserName || 'Unassigned',
+        crmUserId: order.crmUserId,
+        createdAt: order.createdAt,
+        totalBilled: invoice,
+        paidAmount: paid,
+        due: invoice - paid,
+      });
+    }
     if (!completionStatuses.length || completionStatuses.includes(order.currentStatus)) completedOrders++;
   }
   let monthFraction = 0;
@@ -52,6 +74,9 @@ export function calculateSalesExecutiveSummary(orders: TrackingLink[], users: Us
     }
   }
   const target = executives.reduce((sum, user) => sum + amount(user.monthlySalesTarget), 0) * monthFraction;
+  const targetFailed = Math.max(0, target - totalSales);
+  const targetAchieved = totalSales;
+
   let salesChange: number | null = null;
   const trend: { date: string; label: string; sales: number; previousSales: number; previousDate: string }[] = [];
   if (start && end) {
@@ -78,7 +103,18 @@ export function calculateSalesExecutiveSummary(orders: TrackingLink[], users: Us
       trend.push({ date: format(date, 'dd MMM yyyy'), label: format(date, 'MMM dd'), sales, previousSales, previousDate: format(addDays(previousStart, offset), 'dd MMM yyyy') });
     }
   }
-  return { totalSales, collected, outstanding, completedOrders, orderCount, target, trend, outstandingInvoices, weeklyTrend: trend.length > 0 && !!start && !!end && differenceInCalendarDays(end, start) + 1 > 90,
+  return {
+    totalSales,
+    collected,
+    outstanding,
+    completedOrders,
+    orderCount,
+    target,
+    targetAchieved,
+    targetFailed,
+    trend,
+    outstandingInvoices,
+    weeklyTrend: trend.length > 0 && !!start && !!end && differenceInCalendarDays(end, start) + 1 > 90,
     achievement: target > 0 ? totalSales / target * 100 : null,
     collectionPercent: billed > 0 ? collected / billed * 100 : 0,
     salesChange,

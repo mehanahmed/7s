@@ -43,6 +43,7 @@ import {
   Calendar,
   CalendarClock,
   Truck,
+  Fingerprint,
 } from "lucide-react";
 import type { UserRole, GlobalSettings } from "@/types";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,11 @@ const MENU_ICON_BG: Record<string, string> = {
   Projects: 'bg-teal-500',
   Administration: 'bg-slate-500',
   'All Orders': 'bg-orange-500',
+  Attendance: 'bg-emerald-500',
+  HRM: 'bg-cyan-500',
+  'Attendance Log': 'bg-emerald-500',
+  'Geoforce & Office': 'bg-indigo-500',
+  Documentation: 'bg-blue-500',
   // sub menu
   'Pipe Line': 'bg-blue-500',
   'Follow UP': 'bg-green-500',
@@ -121,6 +127,18 @@ const navItems: NavItem[] = [
   { href: "/invoice", label: "Invoice", icon: FileText, roles: ["SYSTEM_ADMIN", "ADMIN", "CR"] },
   { href: "/leaderboard", label: "Leaderboard", icon: Award, roles: ["SYSTEM_ADMIN", "ADMIN", "CR", "SW", "CG", "EDITOR", "ARTIST"] },
   { href: "/projects", label: "Projects", icon: Briefcase, roles: ["SYSTEM_ADMIN", "ADMIN", "CR", "SW", "CG", "EDITOR", "ARTIST", "LR", "CO"] },
+  {
+    isHeader: true,
+    label: "HRM",
+    icon: Users,
+    roles: ["SYSTEM_ADMIN", "ADMIN"],
+    href: "",
+    subItems: [
+      { href: "/hrm/attendance", label: "Attendance Log", icon: Fingerprint, roles: ["SYSTEM_ADMIN", "ADMIN"] },
+      { href: "/hrm/geoforce", label: "Geoforce & Office", icon: GlobeLock, roles: ["SYSTEM_ADMIN", "ADMIN"] },
+      { href: "/hrm/documentation", label: "Documentation", icon: FileText, roles: ["SYSTEM_ADMIN", "ADMIN"] },
+    ]
+  },
   {
     isHeader: true,
     label: "Administration",

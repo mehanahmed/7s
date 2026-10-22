@@ -117,7 +117,7 @@ export default async function PublicTrackingPage({ params }: PublicTrackingPageP
   const plainOrderData = JSON.parse(JSON.stringify(orderDataResult));
   const plainAllStatuses = JSON.parse(JSON.stringify(allStatusesResult));
   const plainGlobalSettings = JSON.parse(JSON.stringify(globalSettingsResult));
-  const plainAllUsers = JSON.parse(JSON.stringify(allUsersResult));
+  const plainAllUsers = (allUsersResult || []).map((u: any) => ({ id: u.id, name: u.name, email: "", role: u.role, avatarUrl: u.avatarUrl ?? null })) as unknown as User[];
 
   const areCommentsVisible = plainGlobalSettings.areCommentsVisibleOnPublicPage ?? true;
 

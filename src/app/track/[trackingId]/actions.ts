@@ -13,7 +13,8 @@ import { getIO } from "@/lib/socket-io";
 import { sendTelegramMessage, sendTelegramPhoto } from "@/lib/notification-utils";
 import { getAppUrl } from "@/lib/server-utils";
 import { getGlobalSettings } from "@/lib/settings-service";
-import { guard, markPublic } from '@/lib/guard';
+import { guard, markPublic, requireRole } from '@/lib/guard';
+import { getSessionUser } from '@/lib/session';
 import { getSessionUserId, isRateLimited, recordFail } from '@/lib/session-core';
 import { headers } from 'next/headers';
 
@@ -221,10 +222,11 @@ export async function deleteCommentAction(
   targetCommentId: string,
   isReply: boolean,
   parentCommentIdIfReply: string | undefined,
-  actingUser: User | null
+  _actingUser?: User | null
 ): Promise<TrackingLink | { error: string }> {
   await guard();
-  if (!actingUser || actingUser.role !== 'SYSTEM_ADMIN') {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser || sessionUser.role !== 'SYSTEM_ADMIN') {
     return { error: "Permission denied. Only System Administrators can delete comments." };
   }
 
@@ -464,6 +466,7 @@ export async function submitPaymentProofAction(
 
 export async function removeOrderApprovalAction(orderId: string): Promise<TrackingLink | { error: string }> {
   await guard();
+  await requireRole(['SYSTEM_ADMIN', 'ADMIN']);
   try {
     const order = await getOrderById(orderId);
     if (!order) {

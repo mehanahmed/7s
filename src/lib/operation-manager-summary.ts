@@ -55,7 +55,7 @@ export function calculateOperationManagerSummary(orders: TrackingLink[], userId:
     const completionEntry = history.filter(entry => entry.status === orderStatusIdForStage('Project Complete') || entry.status === 'logistics')
       .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))[0];
     if (inRange(validDate(completionEntry?.timestamp))) completedProjects++;
-    if (order.currentStatus === orderStatusIdForStage('On Hold')) blockedProjects++;
+    if ((order.currentStatus === orderStatusIdForStage('Approval Period') || order.currentStatus === 'on-hold')) blockedProjects++;
     const handoverEntry = history.filter(entry => entry.status === orderStatusIdForStage('On Script') && (validDate(entry.timestamp)?.getTime() ?? -Infinity) >= assignedAt.getTime())
       .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))[0];
     const handedOverAt = validDate(handoverEntry?.timestamp);
@@ -65,13 +65,13 @@ export function calculateOperationManagerSummary(orders: TrackingLink[], userId:
       let priority = '', priorityOrder = 5;
       if (deadline && endOfDay(deadline) < startOfDay(now)) { priority = 'Overdue'; priorityOrder = 0; }
       else if (deadline && startOfDay(deadline).getTime() === startOfDay(now).getTime()) { priority = 'Due today'; priorityOrder = 1; }
-      else if (order.currentStatus === orderStatusIdForStage('On Hold')) { priority = 'Blocked'; priorityOrder = 2; }
+      else if ((order.currentStatus === orderStatusIdForStage('Approval Period') || order.currentStatus === 'on-hold')) { priority = 'Blocked'; priorityOrder = 2; }
       else if (order.currentStatus === managerStage) { priority = 'Handover pending'; priorityOrder = 3; }
       else if (order.currentStatus === orderStatusIdForStage('Client Revision')) { priority = 'Client response'; priorityOrder = 4; }
       if (priority) attention.push({ id: order.id, companyName: order.companyName, stage: stageForOrderStatus(order.currentStatus), assignee: getLatestOrderAssignee(order), deliveryDate: deadline ? order.acceptedDeliveryDate! : null, priority, priorityOrder });
     }
   }
-  const primaryStages = new Set(['Operation Manager', 'On Script', 'Artist Booked', 'Cinematographer', 'On Editor', 'Client Revision']);
+  const primaryStages = new Set(['Operation Manager', 'Requirements Collection', 'On Script', 'Artist Booked', 'Cinematographer', 'On Editor', 'Client Revision']);
   const flow = PROJECT_STAGE_CONFIG.filter(config => primaryStages.has(config.status) || (stageCounts.get(config.status) ?? 0) > 0)
     .map(config => ({ stage: config.status, color: config.color, count: stageCounts.get(config.status) ?? 0 }));
   attention.sort((a, b) => a.priorityOrder - b.priorityOrder || (validDate(a.deliveryDate)?.getTime() ?? Infinity) - (validDate(b.deliveryDate)?.getTime() ?? Infinity) || a.id.localeCompare(b.id));
