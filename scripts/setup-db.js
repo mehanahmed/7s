@@ -49,7 +49,11 @@ async function main() {
   });
 
   console.log(`2. Ensuring database '${DB_NAME}' exists...`);
-  await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  try {
+    await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  } catch (e) {
+    console.log(`Note: Database check/creation skipped (${e.message}), proceeding to connect directly.`);
+  }
   await rootConn.end();
 
   console.log(`3. Connecting to database '${DB_NAME}'...`);
