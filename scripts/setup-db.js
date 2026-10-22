@@ -1,8 +1,10 @@
+require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const { randomUUID } = require('crypto');
 const fs = require('fs');
-const path = require('path');
 
 const DB_HOST = process.env.DATABASE_HOST || 'localhost';
 const DB_USER = process.env.DATABASE_USER || 'root';
@@ -40,32 +42,45 @@ const DEFAULT_STATUSES = [
 ];
 
 async function main() {
-  console.log(`1. Connecting to MySQL at ${DB_HOST}:${DB_PORT} as ${DB_USER}...`);
-  const rootConn = await mysql.createConnection({
-    host: DB_HOST,
-    user: DB_USER,
-    password: DB_PASS,
-    port: DB_PORT,
-  });
-
-  console.log(`2. Ensuring database '${DB_NAME}' exists...`);
+  console.log(`1. Connecting to MySQL at ${DB_HOST}:${DB_PORT} as ${DB_USER} for database '${DB_NAME}'...`);
+  
+  let db;
   try {
-    await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-  } catch (e) {
-    console.log(`Note: Database check/creation skipped (${e.message}), proceeding to connect directly.`);
+    db = await mysql.createConnection({
+      host: DB_HOST,
+      user: DB_USER,
+      password: DB_PASS,
+      database: DB_NAME,
+      port: DB_PORT,
+    });
+  } catch (err) {
+    if (err.code === 'ER_BAD_DB_ERROR') {
+      console.log(`Database '${DB_NAME}' does not exist yet. Attempting to create it...`);
+      try {
+        const rootConn = await mysql.createConnection({
+          host: DB_HOST,
+          user: DB_USER,
+          password: DB_PASS,
+          port: DB_PORT,
+        });
+        await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await rootConn.end();
+        db = await mysql.createConnection({
+          host: DB_HOST,
+          user: DB_USER,
+          password: DB_PASS,
+          database: DB_NAME,
+          port: DB_PORT,
+        });
+      } catch (rootErr) {
+        throw new Error(`Failed to create database '${DB_NAME}': ${rootErr.message}`);
+      }
+    } else {
+      throw err;
+    }
   }
-  await rootConn.end();
 
-  console.log(`3. Connecting to database '${DB_NAME}'...`);
-  const db = await mysql.createConnection({
-    host: DB_HOST,
-    user: DB_USER,
-    password: DB_PASS,
-    database: DB_NAME,
-    port: DB_PORT,
-  });
-
-  console.log('4. Creating tables...');
+  console.log('2. Connected successfully! Creating tables...');
 
   // user_roles
   await db.query(`
