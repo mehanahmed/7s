@@ -20,6 +20,9 @@ export default async function AuthenticatedLayout({
   }
 
   const currentUser = await getSessionUser();
+  if (!currentUser) {
+    redirect('/login');
+  }
 
   // Fetch initial settings on the server.
   const globalSettings = await getGlobalSettings();

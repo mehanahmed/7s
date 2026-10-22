@@ -33,11 +33,15 @@ export async function serverSeedInitialAdminUser() {
 }
 
 export async function serverGetUserById(userId: string): Promise<User | null> {
-  if (!(await getSessionUserId())) return null;
-  const user = await getUserById(userId);
-  if (!user) return null;
-  const { password, ...userWithoutPassword } = user;
-  return userWithoutPassword as User;
+  try {
+    if (!(await getSessionUserId())) return null;
+    const user = await getUserById(userId);
+    if (!user) return null;
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
+  } catch {
+    return null;
+  }
 }
 
 export async function serverVerifyUserPassword(email: string, pass: string): Promise<User | null> {
