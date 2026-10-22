@@ -31,7 +31,10 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: [
     '192.168.0.109',
-    '192.168.0.109:9002',
+    'crm.savensolution.com',
+        'https://crm.savensolution.com',
+        'www.crm.savensolution.com',
+        '192.168.0.109:9002',
     'localhost',
     'localhost:9002',
     '127.0.0.1',
@@ -42,6 +45,9 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '4mb',
       allowedOrigins: [
+        'crm.savensolution.com',
+        'https://crm.savensolution.com',
+        'www.crm.savensolution.com',
         '192.168.0.109:9002',
         '192.168.0.109',
         'localhost:9002',
@@ -122,3 +128,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
