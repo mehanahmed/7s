@@ -70,7 +70,7 @@ export function LoginForm() {
 
   if (show2FAScreen && pendingUser) {
     return (
-      <Card className="w-full max-w-[380px] shadow-2xl bg-card/95 backdrop-blur-md border-border/30 dark:border-border/50 rounded-xl transform hover:scale-[1.01] transition-transform duration-300">
+      <Card className="w-full min-h-screen sm:min-h-0 sm:max-w-[380px] rounded-none sm:rounded-xl border-0 sm:border flex flex-col justify-center shadow-none sm:shadow-2xl bg-card/95 backdrop-blur-md border-border/30 dark:border-border/50">
         <CardHeader className="text-center pt-5 pb-1 px-6">
           <div className="flex items-center justify-center gap-2 mb-0.5">
             <Image
@@ -179,8 +179,8 @@ export function LoginForm() {
   }
 
   return (
-    <div className="relative z-10 w-full max-w-[460px] animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-      <div className="overflow-hidden rounded-[32px] border border-white/80 bg-gradient-to-b from-cyan-100/80 via-white/90 to-white/95 p-10 pt-12 shadow-[0_30px_80px_-20px_rgba(37,99,235,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+    <div className="relative z-10 w-full min-h-screen sm:min-h-0 sm:max-w-[460px] flex items-center justify-center animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="w-full min-h-screen sm:min-h-0 flex flex-col justify-center overflow-hidden rounded-none sm:rounded-[32px] border-0 sm:border border-white/80 bg-gradient-to-b from-cyan-100/90 via-white/95 to-white/95 p-6 sm:p-10 sm:pt-12 shadow-none sm:shadow-[0_30px_80px_-20px_rgba(37,99,235,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-trim.png" alt="Seven Solution" className="mx-auto mb-6 h-11 w-auto object-contain drop-shadow-sm" />
 
