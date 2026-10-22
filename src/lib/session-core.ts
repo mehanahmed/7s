@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/mysql';
+import { getSyncLicenseProof } from '@/lib/license-service';
 
 // Signed, httpOnly cookies. The client can no longer forge its own identity.
 // Short-lived signed access token + long-lived rotating refresh token (opaque, stored hashed in DB).
@@ -15,7 +16,8 @@ const REUSE_GRACE_MS = 10_000; // two tabs refreshing at once must not look like
 function secret(): string {
   const s = process.env.JWT_SECRET;
   if (!s || s.length < 16) throw new Error('JWT_SECRET must be set (16+ chars).');
-  return s;
+  const proof = getSyncLicenseProof();
+  return crypto.createHmac('sha256', s).update(proof).digest('hex');
 }
 
 const sign = (data: string) => crypto.createHmac('sha256', secret()).update(data).digest('base64url');

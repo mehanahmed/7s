@@ -1,3 +1,4 @@
+import { getSystemLicenseStatus } from '@/lib/license-service';
 import { AsyncLocalStorage } from 'async_hooks';
 import { headers } from 'next/headers';
 import { getSessionUserId, rotateRefresh } from '@/lib/session-core';
@@ -17,12 +18,20 @@ export function markPublic() {
  */
 export async function guard(): Promise<void> {
   let fromBrowser = false;
+  let host = 'localhost';
   try {
-    fromBrowser = !!(await headers()).get('next-action');
+    const h = await headers();
+    fromBrowser = !!h.get('next-action');
+    host = h.get('x-forwarded-host') || h.get('host') || 'localhost';
   } catch {
     return; // no request scope (cron, startup)
   }
   if (!fromBrowser || publicCtx.getStore()) return;
+
+  const lic = await getSystemLicenseStatus(host);
+  if (!lic.valid) {
+    throw new Error('System Unlicensed: Please activate your license at /license');
+  }
   if (await getSessionUserId()) return;
   // The 15 minute access token is gone (idle tab, background throttling) but a refresh token may still be valid:
   // renew it right here instead of failing the action. Server actions are allowed to set cookies.

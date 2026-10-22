@@ -56,4 +56,10 @@ scratch/
 # bug hunter audits and caches
 .bug-hunter/
 
+# license generator (private to developer)
+scripts/license/
+.license
+
+
+
 
